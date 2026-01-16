@@ -1,0 +1,226 @@
+@page "/impact"
+@using VoicesForIran.Core.Interfaces
+@using VoicesForIran.Core.Models
+@inject IEmailLogRepository EmailLogRepository
+@rendermode InteractiveServer
+
+<PageTitle>Impact Dashboard - Voices for Iran</PageTitle>
+
+<!-- Hero Section -->
+<section class="bg-success text-white py-4 py-md-5">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 display-md-4 fw-bold mb-3">
+                    <i class="bi bi-bar-chart-line me-2"></i> Impact Dashboard
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    See how many voices are speaking up for human rights in Iran.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-4 py-md-5">
+    <div class="container">
+        @if (_isLoading)
+        {
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3 text-muted">Loading impact statistics...</p>
+            </div>
+        }
+        else if (_stats is not null)
+        {
+            <!-- Stats Cards -->
+            <div class="row g-3 g-md-4 mb-4 mb-md-5">
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
+                        <div class="card-body text-center py-4 py-md-5 bg-primary bg-gradient text-white">
+                            <i class="bi bi-envelope-paper fs-1 mb-2 d-none d-sm-block opacity-75"></i>
+                            <h2 class="display-4 display-md-3 fw-bold mb-1">@_stats.TotalEmailsGenerated</h2>
+                            <p class="mb-0 small small-md">Emails Generated</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm h-100 rounded-4 overflow-hidden">
+                        <div class="card-body text-center py-4 py-md-5 bg-success bg-gradient text-white">
+                            <i class="bi bi-geo-alt fs-1 mb-2 d-none d-sm-block opacity-75"></i>
+                            <h2 class="display-4 display-md-3 fw-bold mb-1">@_stats.UniqueRidings</h2>
+                            <p class="mb-0 small small-md">Ridings Represented</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (_stats.TopRidings.Count > 0)
+            {
+                <div class="card border-0 shadow rounded-4 overflow-hidden">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h3 class="h5 mb-0">
+                            <i class="bi bi-trophy text-warning me-2"></i>
+                            Top Ridings by Engagement
+                        </h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Mobile View -->
+                        <div class="d-md-none">
+                            @{ var mobileRank = 1; }
+                            @foreach (var riding in _stats.TopRidings)
+                            {
+                                <div class="border-bottom p-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="flex-shrink-0">
+                                            @if (mobileRank == 1)
+                                            {
+                                                <span class="badge bg-warning text-dark fs-5 rounded-circle p-2">1</span>
+                                            }
+                                            else if (mobileRank == 2)
+                                            {
+                                                <span class="badge bg-secondary fs-5 rounded-circle p-2">2</span>
+                                            }
+                                            else if (mobileRank == 3)
+                                            {
+                                                <span class="badge bg-danger fs-5 rounded-circle p-2" style="opacity: 0.7">3</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-dark fs-6 rounded-circle p-2">@mobileRank</span>
+                                            }
+                                        </div>
+                                        <div class="flex-grow-1 min-w-0">
+                                            <h6 class="mb-0 text-truncate fw-bold">@riding.RidingName</h6>
+                                            <small class="text-muted text-truncate d-block">@riding.MpName</small>
+                                        </div>
+                                        <div class="flex-shrink-0">
+                                            <span class="badge bg-primary rounded-pill fs-6">@riding.EmailCount</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                mobileRank++;
+                            }
+                        </div>
+
+                        <!-- Desktop View -->
+                        <div class="d-none d-md-block">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col" style="width: 60px;">Rank</th>
+                                            <th scope="col">Riding</th>
+                                            <th scope="col">MP</th>
+                                            <th scope="col" class="text-end" style="width: 100px;">Emails</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{ var rank = 1; }
+                                        @foreach (var riding in _stats.TopRidings)
+                                        {
+                                            <tr>
+                                                <td class="text-center">
+                                                    @if (rank == 1)
+                                                    {
+                                                        <span class="badge bg-warning text-dark">1st</span>
+                                                    }
+                                                    else if (rank == 2)
+                                                    {
+                                                        <span class="badge bg-secondary">2nd</span>
+                                                    }
+                                                    else if (rank == 3)
+                                                    {
+                                                        <span class="badge bg-danger" style="opacity: 0.7">3rd</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">@rank</span>
+                                                    }
+                                                </td>
+                                                <td class="fw-semibold">@riding.RidingName</td>
+                                                <td class="text-muted">@riding.MpName</td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-primary rounded-pill">@riding.EmailCount</span>
+                                                </td>
+                                            </tr>
+                                            rank++;
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- CTA -->
+            <div class="text-center mt-4 mt-md-5">
+                <a href="/" class="btn btn-primary btn-lg rounded-3 px-5">
+                    <i class="bi bi-envelope-arrow-up me-2"></i>
+                    Generate Your Email
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-4 text-center p-4 p-md-5">
+                        <div class="card-body">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle p-4 mb-4">
+                                <i class="bi bi-envelope-paper text-primary fs-1"></i>
+                            </div>
+                            <h2 class="h4 mb-3">No Emails Generated Yet</h2>
+                            <p class="text-muted mb-4">
+                                Be the first to make your voice heard! Generate an email to your representatives about human rights in Iran.
+                            </p>
+                            <a href="/" class="btn btn-primary btn-lg rounded-3">
+                                <i class="bi bi-arrow-right me-2"></i>
+                                Get Started
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Privacy Notice -->
+        <div class="row justify-content-center mt-4 mt-md-5">
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="card border-0 bg-light rounded-4">
+                    <div class="card-body text-center py-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle p-3 mb-3 shadow-sm">
+                            <i class="bi bi-shield-lock text-success fs-4"></i>
+                        </div>
+                        <h4 class="h6 mb-2">Privacy Note</h4>
+                        <p class="small text-muted mb-0">
+                            This dashboard only shows aggregate data. We track MP names and riding names to measure
+                            impact, but we <strong>never</strong> store any personal information such as names,
+                            email addresses, or postal codes of users.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private ImpactStats? _stats;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _stats = await EmailLogRepository.GetImpactStatsAsync();
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

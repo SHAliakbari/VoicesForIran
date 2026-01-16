@@ -1,0 +1,66 @@
+﻿@inherits LayoutComponentBase
+
+<div class="d-flex flex-column min-vh-100">
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <span class="me-2">🇮🇷</span>
+                <span class="fw-bold">Voices for Iran</span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <NavLink class="nav-link px-3" href="/" Match="NavLinkMatch.All">
+                            <i class="bi bi-envelope-paper me-1"></i> Generate Email
+                        </NavLink>
+                    </li>
+                    <li class="nav-item">
+                        <NavLink class="nav-link px-3" href="/impact">
+                            <i class="bi bi-bar-chart-line me-1"></i> Impact Dashboard
+                        </NavLink>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        @Body
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-auto">
+        <div class="container">
+            <div class="row gy-3">
+                <div class="col-md-6 text-center text-md-start">
+                    <h5 class="mb-2">🇮🇷 Voices for Iran</h5>
+                    <p class="text-secondary small mb-0">
+                        Empowering Iranian-Canadians to advocate for human rights and democracy in Iran.
+                    </p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="text-secondary small mb-1">
+                        <i class="bi bi-shield-lock me-1"></i> Privacy First: We never store your personal data
+                    </p>
+                    <p class="text-secondary small mb-0">
+                        <i class="bi bi-github me-1"></i> Open Source Project
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>

@@ -1,0 +1,269 @@
+﻿@page "/"
+@using VoicesForIran.Core.Interfaces
+@using VoicesForIran.Core.Models
+@inject IMPLookupService MpLookupService
+@inject IMailtoGenerator MailtoGenerator
+@inject ITemplateProvider TemplateProvider
+@inject IEmailLogRepository EmailLogRepository
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<PageTitle>Voices for Iran - Contact Your Representatives</PageTitle>
+
+<!-- Hero Section -->
+<section class="bg-primary text-white py-4 py-md-5">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 display-md-4 fw-bold mb-3">
+                    <span class="d-block d-sm-inline">🇮🇷</span> Make Your Voice Heard
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    Contact your elected representatives about human rights in Iran. 
+                    Your voice matters.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Form Section -->
+<section class="py-4 py-md-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-4 p-md-5">
+                        <h2 class="h4 mb-4 text-center text-md-start">
+                            <i class="bi bi-envelope-paper text-primary me-2"></i>
+                            Generate Your Advocacy Email
+                        </h2>
+
+                        <EditForm Model="@_formModel" OnValidSubmit="HandleSubmit" FormName="emailForm">
+                            <DataAnnotationsValidator />
+
+                            <div class="mb-4">
+                                <label for="postalCode" class="form-label fw-semibold">
+                                    <i class="bi bi-geo-alt text-primary me-1"></i>
+                                    Postal Code <span class="text-danger">*</span>
+                                </label>
+                                <InputText id="postalCode"
+                                           @bind-Value="_formModel.PostalCode"
+                                           class="form-control form-control-lg text-center text-md-start"
+                                           placeholder="e.g., K1A 0A6"
+                                           maxlength="7"
+                                           style="font-size: 1.25rem; letter-spacing: 0.1em;" />
+                                <ValidationMessage For="@(() => _formModel.PostalCode)" class="text-danger small mt-1" />
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Enter your Canadian postal code to find your local representatives.
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="userName" class="form-label fw-semibold">
+                                    <i class="bi bi-person text-primary me-1"></i>
+                                    Your Name <span class="text-muted fw-normal">(optional)</span>
+                                </label>
+                                <InputText id="userName"
+                                           @bind-Value="_formModel.UserName"
+                                           class="form-control form-control-lg"
+                                           placeholder="To sign your email" />
+                                <div class="form-text">
+                                    <i class="bi bi-shield-lock me-1"></i>
+                                    Your name is only used to sign the email. We never store it.
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <button type="submit"
+                                        class="btn btn-primary btn-lg py-3 rounded-3"
+                                        disabled="@_isLoading">
+                                    @if (_isLoading)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        <span>Finding Representatives...</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-envelope-arrow-up me-2"></i>
+                                        <span>Generate &amp; Open Email</span>
+                                    }
+                                </button>
+                            </div>
+                        </EditForm>
+
+                        @if (!string.IsNullOrEmpty(_errorMessage))
+                        {
+                            <div class="alert alert-danger mt-4 rounded-3" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                @_errorMessage
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (_lookupResult is not null && _lookupResult.HasAnyRepresentatives)
+                {
+                    <div class="card mt-4 shadow border-0 rounded-4 overflow-hidden">
+                        <div class="card-header bg-success text-white py-3">
+                            <h3 class="h5 mb-0">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                @_lookupResult.Representatives.Count Representative(s) Found
+                            </h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush">
+                                @foreach (var rep in _lookupResult.Representatives)
+                                {
+                                    <li class="list-group-item py-3">
+                                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
+                                            <div>
+                                                <h6 class="mb-1 fw-bold">@rep.Name</h6>
+                                                <span class="text-muted small">
+                                                    @rep.ElectedOffice
+                                                    @if (!string.IsNullOrEmpty(rep.DistrictName))
+                                                    {
+                                                        <span> &bull; @rep.DistrictName</span>
+                                                    }
+                                                </span>
+                                            </div>
+                                            <div class="d-flex gap-1 flex-wrap">
+                                                @if (rep.HasEmail)
+                                                {
+                                                    <span class="badge bg-success-subtle text-success">
+                                                        <i class="bi bi-envelope-check"></i> Email
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary-subtle text-secondary">
+                                                        <i class="bi bi-envelope-x"></i> No Email
+                                                    </span>
+                                                }
+                                                @if (rep.IsFederalMP)
+                                                {
+                                                    <span class="badge bg-primary-subtle text-primary">
+                                                        <i class="bi bi-building"></i> MP
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+
+                            @if (_mailtoLink is not null)
+                            {
+                                <div class="p-3 bg-light">
+                                    <a href="@_mailtoLink"
+                                       class="btn btn-success btn-lg w-100 py-3 rounded-3"
+                                       target="_blank">
+                                        <i class="bi bi-envelope-open me-2"></i>
+                                        Open Email in Your Mail App
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Privacy Notice -->
+                <div class="card mt-4 border-0 bg-light rounded-4">
+                    <div class="card-body text-center py-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-white rounded-circle p-3 mb-3 shadow-sm">
+                            <i class="bi bi-shield-lock text-success fs-4"></i>
+                        </div>
+                        <h4 class="h6 mb-2">Privacy First</h4>
+                        <p class="small text-muted mb-0">
+                            We <strong>never</strong> store your name, postal code, or any personal information.
+                            Only aggregate statistics (riding, MP name) are logged for our 
+                            <a href="/impact" class="text-decoration-none">impact dashboard</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+private EmailFormModel _formModel = new();
+private RepresentativeLookupResult? _lookupResult;
+private string? _mailtoLink;
+private string? _errorMessage;
+private bool _isLoading;
+
+    private async Task HandleSubmit()
+    {
+        _errorMessage = null;
+        _lookupResult = null;
+        _mailtoLink = null;
+        _isLoading = true;
+
+        try
+        {
+            // Look up representatives
+            _lookupResult = await MpLookupService.LookupByPostalCodeAsync(_formModel.PostalCode ?? "");
+
+            if (!_lookupResult.HasAnyRepresentatives)
+            {
+                _errorMessage = "No representatives found for this postal code. Please check the postal code and try again.";
+                return;
+            }
+
+            if (!_lookupResult.HasEmailableRepresentatives)
+            {
+                _errorMessage = "Representatives were found, but none have public email addresses available.";
+                return;
+            }
+
+            // Get random template and apply placeholders
+            var primaryRecipient = _lookupResult.PrimaryMP ?? _lookupResult.EmailableRepresentatives.First();
+            var template = TemplateProvider.GetRandomTemplate();
+            
+            // Replace placeholders with actual values
+            var variables = new Dictionary<string, string>
+            {
+                ["RepresentativeTitle"] = $"{primaryRecipient.ElectedOffice} {primaryRecipient.Name}",
+                ["RepresentativeName"] = primaryRecipient.Name,
+                ["RepresentativeOffice"] = primaryRecipient.ElectedOffice,
+                ["RidingName"] = primaryRecipient.DistrictName ?? "your riding",
+                ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
+                ["UserName"] = _formModel.UserName ?? "A concerned constituent"
+            };
+            var processedTemplate = template.WithVariables(variables);
+
+            // Generate mailto link
+            _mailtoLink = MailtoGenerator.GenerateMailtoLink(_lookupResult, processedTemplate, _formModel.UserName);
+
+            // Log for impact dashboard (only MP name and riding - NO user data)
+            await EmailLogRepository.LogEmailGenerationAsync(
+                primaryRecipient.Name,
+                primaryRecipient.DistrictName ?? "Unknown Riding");
+
+            // Open the mailto link
+            await JSRuntime.InvokeVoidAsync("open", _mailtoLink, "_blank");
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private sealed class EmailFormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Postal code is required")]
+        [System.ComponentModel.DataAnnotations.RegularExpression(
+            @"^[ABCEGHJKLMNPRSTVXYabceghj-nprstv-y]\d[ABCEGHJKLMNPRSTVWXYZabceghj-nprstv-z]\s?\d[ABCEGHJKLMNPRSTVWXYZabceghj-nprstv-z]\d$",
+            ErrorMessage = "Please enter a valid Canadian postal code (e.g., K1A 0A6)")]
+        public string? PostalCode { get; set; }
+
+        public string? UserName { get; set; }
+    }
+}
