@@ -1,4 +1,4 @@
-# ???? Voices for Iran
+﻿# Voices for Iran
 
 [![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Blazor](https://img.shields.io/badge/Blazor-Server-512BD4?logo=blazor)](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
@@ -8,15 +8,15 @@
 
 Voices for Iran is an open-source Blazor Server application that helps Canadian citizens easily contact their elected representatives about human rights issues in Iran. Simply enter your postal code, and the app will find your representatives and generate a personalized advocacy email.
 
-## ? Features
+## ✨ Features
 
-- **?? Postal Code Lookup** � Automatically finds your federal and provincial representatives based on your Canadian postal code
-- **?? Email Generation** � Creates personalized advocacy emails using randomized templates to avoid spam filters
-- **?? Impact Dashboard** � Track community engagement with real-time statistics on emails generated and ridings represented
-- **?? Privacy First** � We never store your name, postal code, or any personal information
-- **?? Mobile Responsive** � Full Bootstrap 5 responsive design works on any device
+- **📍 Postal Code Lookup** – Automatically finds your federal and provincial representatives based on your Canadian postal code
+- **✉️ Email Generation** – Creates personalized advocacy emails using randomized templates to avoid spam filters
+- **📊 Impact Dashboard** – Track community engagement with real-time statistics on emails generated and ridings represented
+- **🔒 Privacy First** – We never store your name, postal code, or any personal information
+- **📱 Mobile Responsive** – Full Bootstrap 5 responsive design works on any device
 
-## ?? Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -38,22 +38,22 @@ Voices for Iran is an open-source Blazor Server application that helps Canadian 
 3. **Open your browser**
    Navigate to `https://localhost:5001` or `http://localhost:5000`
 
-## ?? Project Structure
+## 📁 Project Structure
 
 ```
 VoicesForIran/
-??? Components/
-?   ??? Layout/         # Main layout and navigation
-?   ??? Pages/          # Razor pages (Home, Impact)
-??? Core/
-?   ??? Interfaces/     # Service contracts
-?   ??? Models/         # Domain models
-?   ??? Services/       # Business logic
-??? Templates/          # Email templates (JSON)
-??? wwwroot/            # Static assets (CSS, JS)
+├── Components/
+│   ├── Layout/         # Main layout and navigation
+│   ├── Pages/          # Razor pages (Home, Impact)
+├── Core/
+│   ├── Interfaces/     # Service contracts
+│   ├── Models/         # Domain models
+│   ├── Services/       # Business logic
+├── Templates/          # Email templates (JSON)
+├── wwwroot/            # Static assets (CSS, JS)
 ```
 
-## ?? Email Templates
+## 📨 Email Templates
 
 The application uses randomized email templates to help avoid spam detection. Templates are stored as JSON files in the `Templates/` folder and support dynamic placeholders:
 
@@ -67,14 +67,14 @@ The application uses randomized email templates to help avoid spam detection. Te
 
 See [Templates/README.md](VoicesForIran/Templates/README.md) for more details on creating custom templates.
 
-## ??? Tech Stack
+## 🛠 Tech Stack
 
 - **Framework:** [.NET 10](https://dotnet.microsoft.com/) / [Blazor Server](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
 - **UI:** [Bootstrap 5](https://getbootstrap.com/) with [Bootstrap Icons](https://icons.getbootstrap.com/)
 - **Database:** SQLite (via Microsoft.Data.Sqlite)
 - **Architecture:** Clean Architecture with dependency injection
 
-## ?? Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -86,25 +86,25 @@ Contributions are welcome! Here's how you can help:
 
 ### Ideas for Contributions
 
-- ?? Add support for more provinces/territories
-- ?? Internationalization (French language support)
-- ?? Additional email templates
-- ?? Unit and integration tests
-- ?? Documentation improvements
+- 🌍 Add support for more provinces/territories
+- 🇫🇷 Internationalization (French language support)
+- 📧 Additional email templates
+- ✅ Unit and integration tests
+- 📝 Documentation improvements
 
-## ?? Privacy
+## 🔒 Privacy
 
 Voices for Iran is designed with privacy as a core principle:
 
-- **No personal data storage** � Your name and postal code are never saved
-- **Minimal logging** � Only aggregate statistics (riding name, MP name) are logged for the impact dashboard
-- **Client-side email** � Emails open in your default mail client; we never see or send your emails
+- **No personal data storage** – Your name and postal code are never saved
+- **Minimal logging** – Only aggregate statistics (riding name, MP name) are logged for the impact dashboard
+- **Client-side email** – Emails open in your default mail client; we never see or send your emails
 
-## ?? License
+## 📜 License
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## ?? Acknowledgments
+## 🙏 Acknowledgments
 
 - All contributors and supporters of human rights in Iran
 - The Iranian-Canadian community for their continued advocacy
@@ -116,7 +116,7 @@ This project is open source and available under the [MIT License](LICENSE).
 </p>
 
 <p align="center">
-  <a href="https://github.com/SHAliakbari/VoicesForIran">? Star this repo</a> �
-  <a href="https://github.com/SHAliakbari/VoicesForIran/issues">?? Report Bug</a> �
-  <a href="https://github.com/SHAliakbari/VoicesForIran/issues">?? Request Feature</a>
+  <a href="https://github.com/SHAliakbari/VoicesForIran">⭐ Star this repo</a> •
+  <a href="https://github.com/SHAliakbari/VoicesForIran/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/SHAliakbari/VoicesForIran/issues">🚀 Request Feature</a>
 </p>
