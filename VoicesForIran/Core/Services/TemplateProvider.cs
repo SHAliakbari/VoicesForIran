@@ -6,7 +6,8 @@ namespace VoicesForIran.Core.Services;
 
 /// <summary>
 /// Provides email templates loaded from JSON files in the Templates folder.
-/// Randomly selects templates to help avoid spam filter patterns.
+/// Supports targeted selection based on representative level, party, and language.
+/// Randomly selects from matching templates to help avoid spam filter patterns.
 /// </summary>
 public sealed class TemplateProvider : ITemplateProvider
 {
@@ -14,6 +15,13 @@ public sealed class TemplateProvider : ITemplateProvider
     private readonly ILogger<TemplateProvider> _logger;
     private readonly Random _random = new();
     private List<EmailTemplate> _templates = [];
+    private PartyMappingConfiguration _partyMapping = new();
+
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true
+    };
 
     public TemplateProvider(IWebHostEnvironment environment, ILogger<TemplateProvider> logger)
     {
@@ -25,41 +33,83 @@ public sealed class TemplateProvider : ITemplateProvider
     {
         _templates.Clear();
 
+        // Ensure templates directory exists
         if (!Directory.Exists(_templatesPath))
         {
-            _logger.LogWarning("Templates directory not found at {Path}. Creating with default templates.", _templatesPath);
-            Directory.CreateDirectory(_templatesPath);
-            await CreateDefaultTemplatesAsync(cancellationToken);
+            _logger.LogError("Templates directory not found at {Path}. Please ensure template files exist.", _templatesPath);
+            throw new DirectoryNotFoundException($"Templates directory not found at {_templatesPath}");
         }
 
-        var templateFiles = Directory.GetFiles(_templatesPath, "*.json");
+        // Load party mapping configuration
+        await LoadPartyMappingAsync(cancellationToken);
 
-        if (templateFiles.Length == 0)
+        // Load all templates recursively
+        await LoadTemplatesFromDirectoryAsync(_templatesPath, cancellationToken);
+
+        if (_templates.Count == 0)
         {
-            _logger.LogWarning("No template files found. Creating default templates.");
-            await CreateDefaultTemplatesAsync(cancellationToken);
-            templateFiles = Directory.GetFiles(_templatesPath, "*.json");
+            _logger.LogError("No templates found in {Path}. Please ensure template JSON files exist in the Templates directory and its subdirectories.", _templatesPath);
+            throw new InvalidOperationException($"No templates found in {_templatesPath}. Please ensure template JSON files exist in the Templates directory and its subdirectories.");
+
         }
+
+        _logger.LogInformation("Loaded {Count} email templates", _templates.Count);
+    }
+
+    private async Task LoadPartyMappingAsync(CancellationToken cancellationToken)
+    {
+        var configPath = Path.Combine(_templatesPath, "config", "party-mapping.json");
+
+        if (!File.Exists(configPath))
+        {
+            _logger.LogWarning("Party mapping configuration not found at {Path}. Using empty mapping.", configPath);
+            _partyMapping = new PartyMappingConfiguration();
+            return;
+        }
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(configPath, cancellationToken);
+            _partyMapping = JsonSerializer.Deserialize<PartyMappingConfiguration>(json, JsonOptions) ?? new();
+            _logger.LogDebug("Loaded party mapping with {Count} ideology groups", _partyMapping.Ideologies.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load party mapping configuration from {Path}", configPath);
+            _partyMapping = new PartyMappingConfiguration();
+        }
+    }
+
+    private async Task LoadTemplatesFromDirectoryAsync(string directory, CancellationToken cancellationToken)
+    {
+        // Skip config directory
+        if (directory.EndsWith("config", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var templateFiles = Directory.GetFiles(directory, "*.json");
 
         foreach (var file in templateFiles)
         {
             try
             {
                 var json = await File.ReadAllTextAsync(file, cancellationToken);
-                var templateData = JsonSerializer.Deserialize<TemplateFileData>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                var templateData = JsonSerializer.Deserialize<TemplateFileData>(json, JsonOptions);
 
-                if (templateData is not null)
+                if (templateData is not null && !string.IsNullOrWhiteSpace(templateData.Subject) && !string.IsNullOrWhiteSpace(templateData.Body))
                 {
+                    var relativePath = Path.GetRelativePath(_templatesPath, file);
+                    var targeting = ParseTargetingFromPath(relativePath, templateData.Targeting);
+
                     _templates.Add(new EmailTemplate
                     {
-                        FileName = Path.GetFileName(file),
+                        Id = templateData.Id ?? Path.GetFileNameWithoutExtension(file),
+                        FileName = relativePath,
                         Subject = templateData.Subject,
-                        Body = templateData.Body
+                        Body = templateData.Body,
+                        Targeting = targeting
                     });
-                    _logger.LogDebug("Loaded template: {FileName}", Path.GetFileName(file));
+                    _logger.LogDebug("Loaded template: {FileName} (Level={Level}, Ideology={Ideology}, Language={Language})",
+                        relativePath, targeting.Level, targeting.Ideology, targeting.Language);
                 }
             }
             catch (Exception ex)
@@ -68,7 +118,66 @@ public sealed class TemplateProvider : ITemplateProvider
             }
         }
 
-        _logger.LogInformation("Loaded {Count} email templates", _templates.Count);
+        // Recursively load from subdirectories
+        foreach (var subDir in Directory.GetDirectories(directory))
+        {
+            await LoadTemplatesFromDirectoryAsync(subDir, cancellationToken);
+        }
+    }
+
+    private static TemplateTargeting ParseTargetingFromPath(string relativePath, TemplateTargetingData? explicitTargeting)
+    {
+        var pathParts = relativePath.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+        // Initialize from explicit targeting if provided
+        RepresentativeLevel? level = explicitTargeting?.Level;
+        PoliticalIdeology? ideology = explicitTargeting?.Ideology;
+        var language = explicitTargeting?.Language ?? "en";
+        var tags = explicitTargeting?.Tags ?? [];
+
+        // Parse from path structure: Templates/[lang]/[level]/[ideology]/filename.json
+        foreach (var part in pathParts)
+        {
+            var lowerPart = part.ToLowerInvariant();
+
+            // Language detection
+            if (lowerPart is "en" or "fr")
+            {
+                language = lowerPart;
+                continue;
+            }
+
+            // Level detection
+            if (lowerPart == "federal")
+            {
+                level = RepresentativeLevel.Federal;
+                continue;
+            }
+            if (lowerPart == "provincial")
+            {
+                level = RepresentativeLevel.Provincial;
+                continue;
+            }
+            if (lowerPart == "municipal")
+            {
+                level = RepresentativeLevel.Municipal;
+                continue;
+            }
+
+            // Ideology detection
+            if (Enum.TryParse<PoliticalIdeology>(part, ignoreCase: true, out var parsedIdeology))
+            {
+                ideology = parsedIdeology;
+            }
+        }
+
+        return new TemplateTargeting
+        {
+            Level = level,
+            Ideology = ideology,
+            Language = language,
+            Tags = tags
+        };
     }
 
     public EmailTemplate GetRandomTemplate()
@@ -82,157 +191,115 @@ public sealed class TemplateProvider : ITemplateProvider
         return _templates[index];
     }
 
-    private async Task CreateDefaultTemplatesAsync(CancellationToken cancellationToken)
+    public EmailTemplate GetTargetedTemplate(Representative representative)
     {
-        var defaultTemplates = GetDefaultTemplates();
-
-        foreach (var (fileName, template) in defaultTemplates)
+        if (_templates.Count == 0)
         {
-            var filePath = Path.Combine(_templatesPath, fileName);
-            var json = JsonSerializer.Serialize(template, new JsonSerializerOptions { WriteIndented = true });
-            await File.WriteAllTextAsync(filePath, json, cancellationToken);
-            _logger.LogInformation("Created default template: {FileName}", fileName);
+            throw new InvalidOperationException("No templates loaded. Call LoadTemplatesAsync first.");
         }
+
+        var level = representative.Level;
+        var ideology = GetIdeologyForParty(representative.Party);
+        var language = representative.PreferredLanguageCode;
+
+        // Try to find templates with decreasing specificity
+        var candidates = FindMatchingTemplates(level, ideology, language);
+
+        if (candidates.Count == 0)
+        {
+            // Fallback to any template in the same language
+            candidates = _templates.Where(t =>
+                string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(t.Targeting.Language, "en", StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+
+        if (candidates.Count == 0)
+        {
+            // Ultimate fallback to any template
+            candidates = _templates;
+        }
+
+        // Randomly select from matching templates
+        var index = _random.Next(candidates.Count);
+        var selected = candidates[index];
+
+        _logger.LogDebug("Selected template {Template} for {Representative} (Level={Level}, Ideology={Ideology}, Language={Language})",
+            selected.FileName, representative.Name, level, ideology, language);
+
+        return selected;
     }
 
-    private static Dictionary<string, TemplateFileData> GetDefaultTemplates() => new()
+    private List<EmailTemplate> FindMatchingTemplates(RepresentativeLevel level, PoliticalIdeology ideology, string language)
     {
-        ["template-urgent-support.json"] = new TemplateFileData
-        {
-            Subject = "Urgent: Your Constituent from {{PostalCode}} Asks You to Support Human Rights in Iran",
-            Body = """
-Dear {{RepresentativeTitle}},
+        // Priority 1: Exact match (level + ideology + language)
+        var exact = _templates.Where(t =>
+            t.Targeting.Level == level &&
+            t.Targeting.Ideology == ideology &&
+            string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase)).ToList();
 
-I am writing to you as your constituent living in {{RidingName}} (postal code {{PostalCode}}) to express my deep concern about the ongoing human rights crisis in Iran.
+        if (exact.Count > 0) return exact;
 
-The Iranian regime is waging war against its own people. Unarmed civilians - men, women, and children - are being shot with live ammunition in the streets. The regime has imposed brutal internet shutdowns to hide its atrocities from the world while it murders its own citizens. People with bare hands are standing against military forces armed with real war bullets. This is not a protest - it is a massacre.
+        // Priority 2: Level + language (any ideology or no ideology specified)
+        var levelMatch = _templates.Where(t =>
+            t.Targeting.Level == level &&
+            (!t.Targeting.Ideology.HasValue || t.Targeting.Ideology == ideology) &&
+            string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase)).ToList();
 
-I urge you to:
+        if (levelMatch.Count > 0) return levelMatch;
 
-1. Publicly condemn the Iranian regime's use of lethal force against peaceful protesters
-2. Support targeted Magnitsky sanctions against officials responsible for these killings
-3. Demand the restoration of internet access so the world can witness these crimes
-4. Advocate for the release of thousands of political prisoners
-5. Support the Iranian people's right to determine their own future
+        // Priority 3: Ideology + language (any level or no level specified)
+        var ideologyMatch = _templates.Where(t =>
+            t.Targeting.Ideology == ideology &&
+            (!t.Targeting.Level.HasValue || t.Targeting.Level == level) &&
+            string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase)).ToList();
 
-Prince Reza Pahlavi has emerged as a unifying voice for millions of Iranians seeking a free, secular, and democratic Iran. His vision of a peaceful transition to democracy, with full respect for human rights and the rule of law, represents the aspirations of the Iranian people. Canada should engage with and support this democratic movement.
+        if (ideologyMatch.Count > 0) return ideologyMatch;
 
-As your constituent from {{PostalCode}}, I am counting on you to be a voice for the voiceless.
+        // Priority 4: Generic templates for the language
+        var genericMatch = _templates.Where(t =>
+            !t.Targeting.Level.HasValue &&
+            !t.Targeting.Ideology.HasValue &&
+            string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase)).ToList();
 
-Thank you for your attention to this critical matter.
-"""
-        },
-        ["template-stand-with-iran.json"] = new TemplateFileData
-        {
-            Subject = "From {{PostalCode}}: Stand with the Iranian People Against Regime Violence",
-            Body = """
-Dear {{RepresentativeTitle}},
+        if (genericMatch.Count > 0) return genericMatch;
 
-I am reaching out as your constituent from {{RidingName}}, postal code {{PostalCode}}, regarding the horrific violence being inflicted on the Iranian people by their own government.
+        // Priority 5: Any English template as ultimate fallback
+        return _templates.Where(t =>
+            string.Equals(t.Targeting.Language, "en", StringComparison.OrdinalIgnoreCase)).ToList();
+    }
 
-What is happening in Iran is not a crackdown - it is a slaughter. The regime is shooting unarmed protesters with live ammunition. Young people with nothing but bare hands are facing military forces armed with real war bullets. To hide these crimes, the regime repeatedly shuts down the internet, plunging the country into darkness while it kills with impunity.
+    public IReadOnlyList<EmailTemplate> GetTemplates(RepresentativeLevel? level = null, PoliticalIdeology? ideology = null, string language = "en")
+    {
+        return _templates.Where(t =>
+            (!level.HasValue || !t.Targeting.Level.HasValue || t.Targeting.Level == level) &&
+            (!ideology.HasValue || !t.Targeting.Ideology.HasValue || t.Targeting.Ideology == ideology) &&
+            string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
 
-The world must not look away.
+    public PoliticalIdeology GetIdeologyForParty(string? partyName)
+    {
+        return _partyMapping.GetIdeology(partyName);
+    }
 
-Canada has long championed human rights on the world stage. I ask that you use your voice and influence to:
-
-- Condemn the regime's use of lethal force against civilians
-- Call for immediate restoration of internet access in Iran
-- Support Magnitsky sanctions against commanders ordering these killings
-- Engage with Iranian-Canadian communities on this issue
-- Back initiatives that support a democratic transition in Iran
-
-Prince Reza Pahlavi has been a beacon of hope for millions of Iranians. His consistent advocacy for secular democracy, non-violence, and human rights offers a path forward for Iran. He represents unity across all ethnic and religious groups in Iran, and his vision aligns perfectly with Canadian values. Canada should support this democratic movement.
-
-As a resident of {{PostalCode}} in your riding, I urge you to stand with the Iranian people.
-
-Thank you for your time and consideration.
-"""
-        },
-        ["template-action-request.json"] = new TemplateFileData
-        {
-            Subject = "Action Needed: Your Constituent from {{PostalCode}} on Iran's Human Rights Crisis",
-            Body = """
-Dear {{RepresentativeTitle}},
-
-I write to you today as a resident of {{RidingName}} ({{PostalCode}}) with a heavy heart regarding the ongoing massacre of the Iranian people by their own government.
-
-The Iranian regime is killing its citizens in cold blood. Protesters armed with nothing but their bare hands are being mowed down by security forces using real war bullets. The regime deliberately shuts down the internet to hide the scale of its atrocities - when the world cannot see, the killing intensifies. Thousands have been murdered. Tens of thousands have been imprisoned and tortured.
-
-As my elected representative, I respectfully request that you:
-
-1. Publicly condemn the Iranian regime's murder of peaceful protesters
-2. Demand an end to internet blackouts used to cover up killings
-3. Support Magnitsky sanctions against regime officials responsible for bloodshed
-4. Meet with Iranian-Canadian constituents to understand the crisis
-5. Advocate for the protection of refugees fleeing persecution
-
-Prince Reza Pahlavi has dedicated his life to advocating for a free, democratic, and secular Iran. He calls for peaceful transition, national unity, and respect for human rights - values that Canada shares. His leadership has united millions of Iranians across ethnic, religious, and political lines. I urge you to recognize and support this democratic movement.
-
-I am counting on you, as my representative, to take action. My postal code is {{PostalCode}} - I am your constituent and I vote.
-
-I look forward to your response.
-"""
-        },
-        ["template-constituent-plea.json"] = new TemplateFileData
-        {
-            Subject = "A Plea from Your Constituent ({{PostalCode}}): Stop the Massacre in Iran",
-            Body = """
-Dear {{RepresentativeTitle}},
-
-As a proud constituent of {{RidingName}}, writing from postal code {{PostalCode}}, I am compelled to bring to your attention the ongoing massacre in Iran.
-
-Every day, the Iranian regime murders its own people. Unarmed civilians with bare hands face military forces wielding real war bullets. Young men and women are shot in the head and chest for simply demanding freedom. The regime imposes total internet shutdowns - not to restore order, but to kill in darkness, away from the eyes of the world. When they restore the internet, the blood has been washed away, but the bodies remain.
-
-This is genocide in slow motion.
-
-I am asking you to take concrete action:
-
-- Speak publicly and forcefully against the regime's murder of civilians
-- Demand immediate restoration of internet access in Iran
-- Advocate for targeted Magnitsky sanctions against regime killers
-- Support humanitarian assistance for victims and their families
-- Engage with the Iranian diaspora in crafting Canada's response
-
-Prince Reza Pahlavi stands as a symbol of hope for the Iranian people. He advocates for a secular, democratic Iran where all ethnicities and religions live as equals. His call for peaceful transition, national reconciliation, and human rights has united Iranians worldwide. Canada should stand with him and the Iranian people's democratic aspirations.
-
-I live at {{PostalCode}} in your riding. I am watching. I am voting. Please act.
-
-Thank you for representing our community and our values.
-"""
-        },
-        ["template-voice-for-iran.json"] = new TemplateFileData
-        {
-            Subject = "Constituent from {{PostalCode}}: Be a Voice for the Voiceless in Iran",
-            Body = """
-Dear {{RepresentativeTitle}},
-
-I hope this message reaches you with the urgency it deserves. I am your constituent from {{RidingName}}, postal code {{PostalCode}}, writing on behalf of millions who cannot speak freely - the people of Iran.
-
-Iran is experiencing a massacre. The regime is gunning down its own citizens - people whose only weapons are their bare hands and their voices. Real war bullets are being fired into crowds of peaceful protesters. And when the killing begins, the regime shuts down the internet so the world cannot witness the horror. They murder in darkness.
-
-This is not a protest being managed. This is a people being exterminated for wanting freedom.
-
-Here is how you can help:
-
-- Champion legislation that sanctions the killers in the Iranian regime
-- Demand the immediate end of internet blackouts in Iran
-- Press for international investigation into the regime's crimes against humanity
-- Ensure Iranian-Canadians have a voice in policy discussions
-- Support media freedom so the truth can reach the world
-
-Prince Reza Pahlavi represents the hope of the Iranian people for a free and democratic future. He has consistently called for peaceful transition, secular democracy, women's rights, and equality for all Iranians regardless of ethnicity or religion. His vision is one of reconciliation and progress. Canada should support this movement for freedom.
-
-I am writing from {{PostalCode}}. I am your constituent. I am asking you to be a voice for the voiceless.
-
-With hope and urgency,
-"""
-        }
-    };
-
+    /// <summary>
+    /// Internal class for deserializing template JSON files
+    /// </summary>
     private sealed class TemplateFileData
     {
+        public string? Id { get; set; }
         public string Subject { get; set; } = string.Empty;
         public string Body { get; set; } = string.Empty;
+        public TemplateTargetingData? Targeting { get; set; }
+    }
+
+    /// <summary>
+    /// Internal class for deserializing targeting data from template JSON files
+    /// </summary>
+    private sealed class TemplateTargetingData
+    {
+        public RepresentativeLevel? Level { get; set; }
+        public PoliticalIdeology? Ideology { get; set; }
+        public string? Language { get; set; }
+        public List<string> Tags { get; set; } = [];
     }
 }

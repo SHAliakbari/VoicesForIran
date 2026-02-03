@@ -21,7 +21,7 @@
                     Make Your Voice Heard
                 </h1>
                 <p class="lead mb-0 opacity-90">
-                    Contact your elected representatives about human rights in Iran. 
+                    Contact your elected representatives about human rights in Iran.
                     Your voice matters.
                 </p>
             </div>
@@ -114,60 +114,213 @@
                                 @_lookupResult.Representatives.Count Representative(s) Found
                             </h3>
                         </div>
-                        <div class="card-body p-0">
-                            <ul class="list-group list-group-flush">
-                                @foreach (var rep in _lookupResult.Representatives)
-                                {
-                                    <li class="list-group-item py-3">
-                                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
-                                            <div>
-                                                <h6 class="mb-1 fw-bold">@rep.Name</h6>
-                                                <span class="text-muted small">
-                                                    @rep.ElectedOffice
-                                                    @if (!string.IsNullOrEmpty(rep.DistrictName))
-                                                    {
-                                                        <span> &bull; @rep.DistrictName</span>
-                                                    }
-                                                </span>
-                                            </div>
-                                            <div class="d-flex gap-1 flex-wrap">
-                                                @if (rep.HasEmail)
-                                                {
-                                                    <span class="badge bg-success-subtle text-success">
-                                                        <i class="bi bi-envelope-check"></i> Email
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-secondary-subtle text-secondary">
-                                                        <i class="bi bi-envelope-x"></i> No Email
-                                                    </span>
-                                                }
-                                                @if (rep.IsFederalMP)
-                                                {
-                                                    <span class="badge bg-primary-subtle text-primary">
-                                                        <i class="bi bi-building"></i> MP
-                                                    </span>
-                                                }
+                        <div class="card-body p-4">
+                            <p class="mb-3 text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Select representatives to email. Each will receive a personalized message tailored to their role and party.
+                            </p>
+
+                            @{
+                                var federalReps = _lookupResult.Representatives.Where(r => r.IsFederalMP && r.HasEmail).ToList();
+                                var provincialReps = _lookupResult.Representatives.Where(r => r.IsProvincial && r.HasEmail).ToList();
+                                var municipalReps = _lookupResult.Representatives.Where(r => r.IsMunicipal && r.HasEmail).ToList();
+                            }
+
+                            @if (federalReps.Any())
+                            {
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-primary mb-3">
+                                        <i class="bi bi-building me-2"></i>Federal Representatives
+                                    </h6>
+                                    @foreach (var rep in federalReps)
+                                    {
+                                        <div class="card mb-2 border">
+                                            <div class="card-body p-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           id="rep-@rep.Name.GetHashCode()"
+                                                           checked="@_selectedRepresentatives.Contains(rep)"
+                                                           @onchange="@(e => ToggleRepresentative(rep, (bool)e.Value!))">
+                                                    <label class="form-check-label w-100" for="rep-@rep.Name.GetHashCode()">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div class="flex-grow-1">
+                                                                <strong>@rep.Name</strong>
+                                                                <div class="text-muted small">@rep.ElectedOffice @(rep.DistrictName != null ? $"• {rep.DistrictName}" : "")</div>
+                                                                @if (!string.IsNullOrEmpty(rep.Party))
+                                                                {
+                                                                    <span class="badge bg-light text-dark border mt-1">@rep.Party</span>
+                                                                }
+                                                            </div>
+                                                            <div class="text-end ms-2">
+                                                                <span class="badge bg-primary-subtle text-primary">MP</span>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
                                             </div>
                                         </div>
-                                    </li>
-                                }
-                            </ul>
+                                    }
+                                </div>
+                            }
 
-                            @if (_mailtoLink is not null)
+                            @if (provincialReps.Any())
                             {
-                                <div class="p-3 bg-light">
-                                    <a href="@_mailtoLink"
-                                       class="btn btn-success btn-lg w-100 py-3 rounded-3"
-                                       target="_blank">
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-info mb-3">
+                                        <i class="bi bi-buildings me-2"></i>Provincial Representatives
+                                    </h6>
+                                    @foreach (var rep in provincialReps)
+                                    {
+                                        <div class="card mb-2 border">
+                                            <div class="card-body p-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           id="rep-@rep.Name.GetHashCode()"
+                                                           checked="@_selectedRepresentatives.Contains(rep)"
+                                                           @onchange="@(e => ToggleRepresentative(rep, (bool)e.Value!))">
+                                                    <label class="form-check-label w-100" for="rep-@rep.Name.GetHashCode()">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div class="flex-grow-1">
+                                                                <strong>@rep.Name</strong>
+                                                                <div class="text-muted small">@rep.ElectedOffice @(rep.DistrictName != null ? $"• {rep.DistrictName}" : "")</div>
+                                                                @if (!string.IsNullOrEmpty(rep.Party))
+                                                                {
+                                                                    <span class="badge bg-light text-dark border mt-1">@rep.Party</span>
+                                                                }
+                                                            </div>
+                                                            <div class="text-end ms-2">
+                                                                <span class="badge bg-info-subtle text-info">@rep.ElectedOffice</span>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            @if (municipalReps.Any())
+                            {
+                                <div class="mb-4">
+                                    <h6 class="fw-bold text-warning mb-3">
+                                        <i class="bi bi-houses me-2"></i>Municipal Representatives
+                                    </h6>
+                                    @foreach (var rep in municipalReps)
+                                    {
+                                        <div class="card mb-2 border">
+                                            <div class="card-body p-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           id="rep-@rep.Name.GetHashCode()"
+                                                           checked="@_selectedRepresentatives.Contains(rep)"
+                                                           @onchange="@(e => ToggleRepresentative(rep, (bool)e.Value!))">
+                                                    <label class="form-check-label w-100" for="rep-@rep.Name.GetHashCode()">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div class="flex-grow-1">
+                                                                <strong>@rep.Name</strong>
+                                                                <div class="text-muted small">@rep.ElectedOffice @(rep.DistrictName != null ? $"• {rep.DistrictName}" : "")</div>
+                                                            </div>
+                                                            <div class="text-end ms-2">
+                                                                <span class="badge bg-warning-subtle text-warning">Local</span>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+
+                            @if (_selectedRepresentatives.Any())
+                            {
+                                <div class="d-grid gap-2">
+                                    <button type="button"
+                                            class="btn btn-success btn-lg py-3 rounded-3"
+                                            @onclick="GenerateEmails">
                                         <i class="bi bi-envelope-open me-2"></i>
-                                        Open Email in Your Mail App
-                                    </a>
+                                        Generate @(_selectedRepresentatives.Count) Email@(_selectedRepresentatives.Count > 1 ? "s" : "")
+                                    </button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info mb-0">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Please select at least one representative to email.
                                 </div>
                             }
                         </div>
                     </div>
+
+                    @if (_generatedEmails.Any())
+                    {
+                        <div class="card mt-4 shadow border-0 rounded-4 overflow-hidden">
+                            <div class="card-header bg-primary text-white py-3">
+                                <h3 class="h5 mb-0">
+                                    <i class="bi bi-envelope-check-fill me-2"></i>
+                                    Your Personalized Emails
+                                </h3>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="list-group list-group-flush">
+                                    @foreach (var email in _generatedEmails)
+                                    {
+                                        <div class="list-group-item p-4">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div>
+                                                    <h6 class="fw-bold mb-1">@email.Representative.Name</h6>
+                                                    <p class="text-muted small mb-1">@email.Representative.ElectedOffice</p>
+                                                    @if (!string.IsNullOrEmpty(email.Representative.Party))
+                                                    {
+                                                        <span class="badge bg-light text-dark border">@email.Representative.Party</span>
+                                                    }
+                                                    <span class="badge @GetLevelBadgeClass(email.Representative) ms-1">
+                                                        @GetLevelLabel(email.Representative)
+                                                    </span>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-success-subtle text-success">
+                                                        <i class="bi bi-file-earmark-text me-1"></i>
+                                                        @email.TemplateName
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <details class="mb-3">
+                                                <summary class="btn btn-sm btn-outline-secondary mb-2" style="cursor: pointer;">
+                                                    <i class="bi bi-eye me-1"></i> Preview Email
+                                                </summary>
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <div class="mb-2">
+                                                            <strong>Subject:</strong><br />
+                                                            <span class="text-muted">@email.ProcessedTemplate.Subject</span>
+                                                        </div>
+                                                        <div>
+                                                            <strong>Message:</strong><br />
+                                                            <pre class="text-muted small mb-0" style="white-space: pre-wrap; font-family: inherit;">@email.ProcessedTemplate.Body</pre>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </details>
+
+                                            <a href="@email.MailtoLink"
+                                               class="btn btn-primary w-100"
+                                               target="_blank">
+                                                <i class="bi bi-envelope-open me-2"></i>
+                                                Open in Email App
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
                 }
 
                 <!-- Privacy Notice -->
@@ -179,7 +332,7 @@
                         <h4 class="h6 mb-2">Privacy First</h4>
                         <p class="small text-muted mb-0">
                             We <strong>never</strong> store your name, postal code, or any personal information.
-                            Only aggregate statistics (riding, MP name) are logged for our 
+                            Only aggregate statistics (riding, MP name) are logged for our
                             <a href="/impact" class="text-decoration-none">impact dashboard</a>.
                         </p>
                     </div>
@@ -190,17 +343,19 @@
 </section>
 
 @code {
-private EmailFormModel _formModel = new();
-private RepresentativeLookupResult? _lookupResult;
-private string? _mailtoLink;
-private string? _errorMessage;
-private bool _isLoading;
+    private EmailFormModel _formModel = new();
+    private RepresentativeLookupResult? _lookupResult;
+    private string? _errorMessage;
+    private bool _isLoading;
+    private HashSet<Representative> _selectedRepresentatives = new();
+    private List<GeneratedEmail> _generatedEmails = new();
 
     private async Task HandleSubmit()
     {
         _errorMessage = null;
         _lookupResult = null;
-        _mailtoLink = null;
+        _selectedRepresentatives.Clear();
+        _generatedEmails.Clear();
         _isLoading = true;
 
         try
@@ -220,32 +375,8 @@ private bool _isLoading;
                 return;
             }
 
-            // Get random template and apply placeholders
-            var primaryRecipient = _lookupResult.PrimaryMP ?? _lookupResult.EmailableRepresentatives.First();
-            var template = TemplateProvider.GetRandomTemplate();
-            
-            // Replace placeholders with actual values
-            var variables = new Dictionary<string, string>
-            {
-                ["RepresentativeTitle"] = $"{primaryRecipient.ElectedOffice} {primaryRecipient.Name}",
-                ["RepresentativeName"] = primaryRecipient.Name,
-                ["RepresentativeOffice"] = primaryRecipient.ElectedOffice,
-                ["RidingName"] = primaryRecipient.DistrictName ?? "your riding",
-                ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
-                ["UserName"] = _formModel.UserName ?? "A concerned constituent"
-            };
-            var processedTemplate = template.WithVariables(variables);
-
-            // Generate mailto link
-            _mailtoLink = MailtoGenerator.GenerateMailtoLink(_lookupResult, processedTemplate, _formModel.UserName);
-
-            // Log for impact dashboard (only MP name and riding - NO user data)
-            await EmailLogRepository.LogEmailGenerationAsync(
-                primaryRecipient.Name,
-                primaryRecipient.DistrictName ?? "Unknown Riding");
-
-            // Open the mailto link
-            await JSRuntime.InvokeVoidAsync("open", _mailtoLink, "_blank");
+            // Pre-select all emailable representatives
+            _selectedRepresentatives = _lookupResult.EmailableRepresentatives.ToHashSet();
         }
         catch (Exception ex)
         {
@@ -257,6 +388,103 @@ private bool _isLoading;
         }
     }
 
+    private void ToggleRepresentative(Representative rep, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _selectedRepresentatives.Add(rep);
+        }
+        else
+        {
+            _selectedRepresentatives.Remove(rep);
+        }
+    }
+
+    private async Task GenerateEmails()
+    {
+        _generatedEmails.Clear();
+        _errorMessage = null;
+
+        try
+        {
+            foreach (var rep in _selectedRepresentatives)
+            {
+                // Get targeted template for this representative
+                var template = TemplateProvider.GetTargetedTemplate(rep);
+
+                // Replace placeholders with actual values
+                var variables = new Dictionary<string, string>
+                {
+                    ["RepresentativeTitle"] = $"{rep.ElectedOffice} {rep.Name}",
+                    ["RepresentativeName"] = rep.Name,
+                    ["RepresentativeOffice"] = rep.ElectedOffice,
+                    ["RidingName"] = rep.DistrictName ?? "your riding",
+                    ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
+                    ["UserName"] = _formModel.UserName ?? "A concerned constituent",
+                    ["Honorific"] = rep.Honorific
+                };
+                var processedTemplate = template.WithVariables(variables);
+
+                // Create a temporary lookup result with just this representative
+                var singleRepResult = new RepresentativeLookupResult
+                {
+                    PostalCode = _lookupResult!.PostalCode,
+                    Representatives = new List<Representative> { rep }
+                };
+
+                // Generate mailto link for this representative
+                var mailtoLink = MailtoGenerator.GenerateMailtoLink(singleRepResult, processedTemplate, _formModel.UserName);
+
+                _generatedEmails.Add(new GeneratedEmail
+                {
+                    Representative = rep,
+                    ProcessedTemplate = processedTemplate,
+                    MailtoLink = mailtoLink,
+                    TemplateName = GetFriendlyTemplateName(template.FileName)
+                });
+
+                // Log for impact dashboard (only MP name and riding - NO user data)
+                await EmailLogRepository.LogEmailGenerationAsync(
+                    rep.Name,
+                    rep.DistrictName ?? "Unknown Riding");
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"An error occurred while generating emails: {ex.Message}";
+        }
+    }
+
+    private static string GetFriendlyTemplateName(string fileName)
+    {
+        // Remove path and extension, make it friendly
+        var name = Path.GetFileNameWithoutExtension(fileName);
+
+        // Convert kebab-case to Title Case
+        name = string.Join(" ", name.Split('-', '_')
+
+                        .Select(word => word.Length > 0
+                ? char.ToUpper(word[0]) + (word.Length > 1 ? word[1..] : string.Empty)
+                : string.Empty));
+
+
+        return name;
+    }
+
+    private static string GetLevelBadgeClass(Representative rep)
+    {
+        if (rep.IsFederalMP) return "bg-primary-subtle text-primary";
+        if (rep.IsProvincial) return "bg-info-subtle text-info";
+        return "bg-warning-subtle text-warning";
+    }
+
+    private static string GetLevelLabel(Representative rep)
+    {
+        if (rep.IsFederalMP) return "Federal";
+        if (rep.IsProvincial) return "Provincial";
+        return "Municipal";
+    }
+
     private sealed class EmailFormModel
     {
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Postal code is required")]
@@ -266,5 +494,13 @@ private bool _isLoading;
         public string? PostalCode { get; set; }
 
         public string? UserName { get; set; }
+    }
+
+    private sealed class GeneratedEmail
+    {
+        public required Representative Representative { get; init; }
+        public required EmailTemplate ProcessedTemplate { get; init; }
+        public required string MailtoLink { get; init; }
+        public required string TemplateName { get; init; }
     }
 }

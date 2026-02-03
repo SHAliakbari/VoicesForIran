@@ -1,0 +1,73 @@
+{
+  "ideologies": {
+    "conservative": {
+      "displayName": "Conservative",
+      "parties": [
+        "Conservative",
+        "Progressive Conservative Party of Ontario",
+        "Progressive Conservative Party of Manitoba",
+        "Progressive Conservative Party of New Brunswick",
+        "Progressive Conservative Association of Nova Scotia",
+        "Progressive Conservative Party of Prince Edward Island",
+        "United Conservative Party",
+        "Saskatchewan Party"
+      ]
+    },
+    "liberal": {
+      "displayName": "Liberal",
+      "parties": [
+        "Liberal",
+        "Ontario Liberal Party",
+        "Nova Scotia Liberal Party",
+        "New Brunswick Liberal Association",
+        "Liberal Party of Prince Edward Island",
+        "British Columbia Liberal Party",
+        "Independent Liberal",
+        "Parti libéral du Québec"
+      ]
+    },
+    "ndp": {
+      "displayName": "NDP",
+      "parties": [
+        "NDP",
+        "New Democratic Party",
+        "New Democratic Party of Ontario",
+        "New Democratic Party of Manitoba",
+        "Alberta New Democratic Party",
+        "New Democratic Party of British Columbia",
+        "Nova Scotia New Democratic Party",
+        "Québec solidaire"
+      ]
+    },
+    "green": {
+      "displayName": "Green",
+      "parties": [
+        "Green Party",
+        "Green Party of Ontario",
+        "Green Party of Prince Edward Island",
+        "BC Green Party"
+      ]
+    },
+    "bloc": {
+      "displayName": "Bloc/Quebec Nationalist",
+      "parties": [
+        "Bloc Québécois",
+        "Coalition avenir Québec",
+        "Parti québécois"
+      ]
+    },
+    "independent": {
+      "displayName": "Independent/Other",
+      "parties": [
+        "Independent",
+        "Indépendant",
+        "New Blue Party of Ontario",
+        "People's Alliance",
+        "Mouvement lavallois",
+        "Action Laval",
+        "Parti Laval",
+        "City Saskatoon"
+      ]
+    }
+  }
+}

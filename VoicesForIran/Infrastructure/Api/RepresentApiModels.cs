@@ -67,6 +67,9 @@ public sealed class RepresentativeDto
     [JsonPropertyName("photo_url")]
     public string? PhotoUrl { get; set; }
 
+    [JsonPropertyName("gender")]
+    public string? Gender { get; set; }
+
     [JsonPropertyName("representative_set_name")]
     public string? RepresentativeSetName { get; set; }
 
@@ -78,6 +81,15 @@ public sealed class RepresentativeDto
 
     [JsonPropertyName("offices")]
     public List<OfficeDto>? Offices { get; set; }
+
+    [JsonPropertyName("extra")]
+    public RepresentativeExtraDto? Extra { get; set; }
+}
+
+public sealed class RepresentativeExtraDto
+{
+    [JsonPropertyName("preferred_languages")]
+    public List<string>? PreferredLanguages { get; set; }
 }
 
 public sealed class OfficeDto

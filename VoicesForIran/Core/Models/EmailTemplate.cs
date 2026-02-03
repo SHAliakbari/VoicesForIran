@@ -2,13 +2,34 @@ namespace VoicesForIran.Core.Models;
 
 /// <summary>
 /// Pre-defined email template for advocacy messages.
-/// Loaded from template files with placeholder support.
+/// Loaded from template files with placeholder support and targeting metadata.
 /// </summary>
 public sealed record EmailTemplate
 {
+    /// <summary>
+    /// Unique identifier for the template
+    /// </summary>
+    public string Id { get; init; } = string.Empty;
+
+    /// <summary>
+    /// The source file name for the template
+    /// </summary>
     public required string FileName { get; init; }
+
+    /// <summary>
+    /// Email subject line with placeholder support
+    /// </summary>
     public required string Subject { get; init; }
+
+    /// <summary>
+    /// Email body content with placeholder support
+    /// </summary>
     public required string Body { get; init; }
+
+    /// <summary>
+    /// Targeting criteria for matching with representatives
+    /// </summary>
+    public TemplateTargeting Targeting { get; init; } = new();
 
     /// <summary>
     /// Processes the template by replacing placeholders with actual values

@@ -1,0 +1,47 @@
+elected Party names:
+United Conservative Party
+Alberta New Democratic Party
+Independent
+British Columbia Liberal Party
+New Democratic Party of British Columbia
+BC Green Party
+Progressive Conservative Party of Manitoba
+New Democratic Party of Manitoba
+Independent Liberal
+Progressive Conservative Party of New Brunswick
+New Brunswick Liberal Association
+Green Party
+People's Alliance
+Nova Scotia Liberal Party
+Progressive Conservative Association of Nova Scotia
+Nova Scotia New Democratic Party
+Progressive Conservative Party of Ontario
+New Democratic Party of Ontario
+New Blue Party of Ontario
+Ontario Liberal Party
+Green Party of Ontario
+Progressive Conservative Party of Prince Edward Island
+Green Party of Prince Edward Island
+Liberal Party of Prince Edward Island
+Coalition avenir Québec
+Parti libéral du Québec
+Parti québécois
+Indépendant
+Québec solidaire
+Mouvement lavallois
+Action Laval
+Parti Laval
+Saskatchewan Party
+New Democratic Party
+City Saskatoon
+
+
+
+house of commons party names:
+Party name
+Conservative
+Bloc Québécois
+Liberal
+NDP
+Green Party
+Independent

@@ -85,7 +85,11 @@ public sealed partial class MPLookupService : IMPLookupService
         Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim(),
         DistrictName = dto.DistrictName,
         Party = dto.PartyName,
-        Url = dto.PersonalUrl ?? dto.Url
+        Url = dto.PersonalUrl ?? dto.Url,
+        Gender = dto.Gender,
+        PreferredLanguages = dto.Extra?.PreferredLanguages is { Count: > 0 }
+            ? string.Join("  ", dto.Extra.PreferredLanguages)
+            : null
     };
 
     private static string NormalizePostalCode(string postalCode)
