@@ -1,0 +1,116 @@
+@using VoicesForIran.Core.Models
+
+<div class="card mt-4 shadow border-0 rounded-4 overflow-hidden">
+    <div class="card-header bg-success text-white py-3">
+        <h3 class="h5 mb-0">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @Representatives.Count Representative(s) Found
+        </h3>
+    </div>
+    <div class="card-body p-4">
+        <p class="mb-3 text-muted">
+            <i class="bi bi-info-circle me-1"></i>
+            Select representatives to email. Each will receive a personalized message tailored to their role and party.
+        </p>
+
+        @if (FederalReps.Any())
+        {
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-primary mb-0">
+                        <i class="bi bi-building me-2"></i>Federal Representatives
+                    </h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="@(() => OnSelectAll.InvokeAsync(FederalReps))">
+                            <i class="bi bi-check-all me-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@(() => OnDeselectAll.InvokeAsync(FederalReps))">
+                            <i class="bi bi-x-lg me-1"></i>Deselect All
+                        </button>
+                    </div>
+                </div>
+                @foreach (var rep in FederalReps)
+                {
+                    <RepresentativeRow Rep="rep" IsSelected="Selected.Contains(rep)" OnToggle="OnToggle" BadgeText="MP" BadgeClass="bg-primary-subtle text-primary" />
+                }
+            </div>
+        }
+
+        @if (ProvincialReps.Any())
+        {
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-info mb-0">
+                        <i class="bi bi-buildings me-2"></i>Provincial Representatives
+                    </h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-info btn-sm" @onclick="@(() => OnSelectAll.InvokeAsync(ProvincialReps))">
+                            <i class="bi bi-check-all me-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@(() => OnDeselectAll.InvokeAsync(ProvincialReps))">
+                            <i class="bi bi-x-lg me-1"></i>Deselect All
+                        </button>
+                    </div>
+                </div>
+                @foreach (var rep in ProvincialReps)
+                {
+                    <RepresentativeRow Rep="rep" IsSelected="Selected.Contains(rep)" OnToggle="OnToggle" BadgeText="@rep.ElectedOffice" BadgeClass="bg-info-subtle text-info" />
+                }
+            </div>
+        }
+
+        @if (MunicipalReps.Any())
+        {
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold text-warning mb-0">
+                        <i class="bi bi-houses me-2"></i>Municipal Representatives
+                    </h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-warning btn-sm" @onclick="@(() => OnSelectAll.InvokeAsync(MunicipalReps))">
+                            <i class="bi bi-check-all me-1"></i>Select All
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@(() => OnDeselectAll.InvokeAsync(MunicipalReps))">
+                            <i class="bi bi-x-lg me-1"></i>Deselect All
+                        </button>
+                    </div>
+                </div>
+                @foreach (var rep in MunicipalReps)
+                {
+                    <RepresentativeRow Rep="rep" IsSelected="Selected.Contains(rep)" OnToggle="OnToggle" BadgeText="Local" BadgeClass="bg-warning-subtle text-warning" />
+                }
+            </div>
+        }
+
+        @if (Selected.Any())
+        {
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-success btn-lg py-3 rounded-3" @onclick="OnGenerate">
+                    <i class="bi bi-envelope-open me-2"></i>
+                    Generate @Selected.Count Email@(Selected.Count > 1 ? "s" : "")
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                Please select at least one representative to email.
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public required IReadOnlyList<Representative> Representatives { get; set; }
+    [Parameter] public required HashSet<Representative> Selected { get; set; }
+
+    [Parameter] public EventCallback<(Representative Rep, bool IsSelected)> OnToggle { get; set; }
+    [Parameter] public EventCallback OnGenerate { get; set; }
+    [Parameter] public EventCallback<List<Representative>> OnSelectAll { get; set; }
+    [Parameter] public EventCallback<List<Representative>> OnDeselectAll { get; set; }
+
+    private List<Representative> FederalReps => Representatives.Where(r => r.IsFederalMP && r.HasEmail).ToList();
+    private List<Representative> ProvincialReps => Representatives.Where(r => r.IsProvincial && r.HasEmail).ToList();
+    private List<Representative> MunicipalReps => Representatives.Where(r => r.IsMunicipal && r.HasEmail).ToList();
+}

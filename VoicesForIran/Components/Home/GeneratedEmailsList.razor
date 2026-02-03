@@ -1,0 +1,105 @@
+@using VoicesForIran.Core.Models
+
+@if (Emails.Any())
+{
+    <div class="card mt-4 shadow border-0 rounded-4 overflow-hidden">
+        <div class="card-header bg-primary text-white py-3">
+            <h3 class="h5 mb-0">
+                <i class="bi bi-envelope-check-fill me-2"></i>
+                Your Personalized Emails
+            </h3>
+        </div>
+        <div class="card-body p-0">
+            <div class="list-group list-group-flush">
+                @foreach (var email in Emails)
+                {
+                    <div class="list-group-item p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">@email.Representative.Name</h6>
+                                <p class="text-muted small mb-1">@email.Representative.ElectedOffice</p>
+                                @if (!string.IsNullOrEmpty(email.Representative.Party))
+                                {
+                                    <span class="badge bg-light text-dark border">@email.Representative.Party</span>
+                                }
+                                <span class="badge @GetLevelBadgeClass(email.Representative) ms-1">
+                                    @GetLevelLabel(email.Representative)
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success-subtle text-success">
+                                    <i class="bi bi-file-earmark-text me-1"></i>
+                                    @email.TemplateName
+                                </span>
+                            </div>
+                        </div>
+
+                        <details class="mb-3">
+                            <summary class="btn btn-sm btn-outline-secondary mb-2" style="cursor: pointer;">
+                                <i class="bi bi-eye me-1"></i> Preview Email
+                            </summary>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>Subject:</strong><br />
+                                        <span class="text-muted">@email.ProcessedTemplate.Subject</span>
+                                    </div>
+                                    <div class="mb-3">
+                                        <strong>Message:</strong><br />
+                                        <pre class="text-muted small mb-0" style="white-space: pre-wrap; font-family: inherit;">@email.ProcessedTemplate.Body</pre>
+                                    </div>
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-primary w-100"
+                                            @onclick="@(() => OnCopy.InvokeAsync(email))">
+                                        @if (CopiedEmailId == email.CopyKey)
+                                        {
+                                            <span><i class="bi bi-check-lg me-1"></i>Copied to Clipboard!</span>
+                                        }
+                                        else
+                                        {
+                                            <span><i class="bi bi-clipboard me-1"></i>Copy to Clipboard</span>
+                                        }
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
+
+                        <a href="@email.MailtoLink" class="btn btn-primary w-100" target="_blank">
+                            <i class="bi bi-envelope-open me-2"></i>
+                            Open in Email App
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public sealed class GeneratedEmailVm
+    {
+        public required Representative Representative { get; init; }
+        public required EmailTemplate ProcessedTemplate { get; init; }
+        public required string MailtoLink { get; init; }
+        public required string TemplateName { get; init; }
+        public required int CopyKey { get; init; }
+    }
+
+    [Parameter] public required IReadOnlyList<GeneratedEmailVm> Emails { get; set; }
+    [Parameter] public int? CopiedEmailId { get; set; }
+    [Parameter] public EventCallback<GeneratedEmailVm> OnCopy { get; set; }
+
+    private static string GetLevelBadgeClass(Representative rep)
+    {
+        if (rep.IsFederalMP) return "bg-primary-subtle text-primary";
+        if (rep.IsProvincial) return "bg-info-subtle text-info";
+        return "bg-warning-subtle text-warning";
+    }
+
+    private static string GetLevelLabel(Representative rep)
+    {
+        if (rep.IsFederalMP) return "Federal";
+        if (rep.IsProvincial) return "Provincial";
+        return "Municipal";
+    }
+}

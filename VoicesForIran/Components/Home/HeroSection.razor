@@ -1,0 +1,20 @@
+<section class="bg-primary text-white py-4 py-md-5">
+    <div class="container">
+        <div class="row justify-content-center text-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 display-md-4 fw-bold mb-3">
+                    <img src="/images/flag.png" alt="Iran Flag" class="me-2" style="height: 1.2em; width: auto;">
+                    @Title
+                </h1>
+                <p class="lead mb-0 opacity-90">
+                    @Subtitle
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Make Your Voice Heard";
+    [Parameter] public string Subtitle { get; set; } = "Contact your elected representatives about human rights in Iran. Your voice matters.";
+}

@@ -1,0 +1,80 @@
+@using VoicesForIran.Components.Home
+@rendermode InteractiveServer
+
+<div class="card shadow-lg border-0 rounded-4">
+    <div class="card-body p-4 p-md-5">
+        <h2 class="h4 mb-4 text-center text-md-start">
+            <i class="bi bi-envelope-paper text-primary me-2"></i>
+            Generate Your Advocacy Email
+        </h2>
+
+        <EditForm Model="@Model" OnValidSubmit="OnValidSubmit" FormName="emailForm">
+            <DataAnnotationsValidator />
+
+            <div class="mb-4">
+                <label for="postalCode" class="form-label fw-semibold">
+                    <i class="bi bi-geo-alt text-primary me-1"></i>
+                    Postal Code <span class="text-danger">*</span>
+                </label>
+                <InputText id="postalCode"
+                           @bind-Value="Model.PostalCode"
+                           class="form-control form-control-lg text-center text-md-start"
+                           placeholder="e.g., K1A 0A6"
+                           maxlength="7"
+                           style="font-size: 1.25rem; letter-spacing: 0.1em;" />
+                <ValidationMessage For="@(() => Model.PostalCode)" class="text-danger small mt-1" />
+                <div class="form-text">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Enter your Canadian postal code to find your local representatives.
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="userName" class="form-label fw-semibold">
+                    <i class="bi bi-person text-primary me-1"></i>
+                    Your Name <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <InputText id="userName"
+                           @bind-Value="Model.UserName"
+                           class="form-control form-control-lg"
+                           placeholder="To sign your email" />
+                <div class="form-text">
+                    <i class="bi bi-shield-lock me-1"></i>
+                    Your name is only used to sign the email. We never store it.
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+                <button type="submit"
+                        class="btn btn-primary btn-lg py-3 rounded-3"
+                        disabled="@IsLoading">
+                    @if (IsLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <span>Finding Representatives...</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-envelope-arrow-up me-2"></i>
+                        <span>Find Representatives</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger mt-4 rounded-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                @ErrorMessage
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public required EmailFormModel Model { get; set; }
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string? ErrorMessage { get; set; }
+}

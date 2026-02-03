@@ -1,0 +1,44 @@
+@using VoicesForIran.Core.Models
+
+<div class="card mb-2 border">
+    <div class="card-body p-3">
+        <div class="form-check">
+            <input class="form-check-input"
+                   type="checkbox"
+                   id="@Id"
+                   checked="@IsSelected"
+                   @onchange="OnChange">
+            <label class="form-check-label w-100" for="@Id">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <strong>@Rep.Name</strong>
+                        <div class="text-muted small">@Rep.ElectedOffice @(Rep.DistrictName != null ? $"• {Rep.DistrictName}" : "")</div>
+                        @if (!string.IsNullOrEmpty(Rep.Party))
+                        {
+                            <span class="badge bg-light text-dark border mt-1">@Rep.Party</span>
+                        }
+                    </div>
+                    <div class="text-end ms-2">
+                        <span class="badge @BadgeClass">@BadgeText</span>
+                    </div>
+                </div>
+            </label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public required Representative Rep { get; set; }
+    [Parameter] public bool IsSelected { get; set; }
+    [Parameter] public required string BadgeText { get; set; }
+    [Parameter] public required string BadgeClass { get; set; }
+    [Parameter] public EventCallback<(Representative Rep, bool IsSelected)> OnToggle { get; set; }
+
+    private string Id => $"rep-{Rep.Email ?? Rep.Name}-{Rep.ElectedOffice}".GetHashCode().ToString();
+
+    private async Task OnChange(ChangeEventArgs e)
+    {
+        var selected = e.Value is bool b && b;
+        await OnToggle.InvokeAsync((Rep, selected));
+    }
+}
