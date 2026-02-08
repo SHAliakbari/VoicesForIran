@@ -10,11 +10,20 @@ Voices for Iran is an open-source Blazor Server application that helps Canadian 
 
 ## ✨ Features
 
-- **📍 Postal Code Lookup** – Automatically finds your federal and provincial representatives based on your Canadian postal code
-- **✉️ Email Generation** – Creates personalized advocacy emails using randomized templates to avoid spam filters
+- **📍 Postal Code Lookup** – Automatically finds your federal, provincial, and municipal representatives based on your Canadian postal code
+- **✉️ Smart Email Generation** – Creates personalized advocacy emails using intelligent templates tailored to:
+  - Government level (federal, provincial, municipal)
+  - Political party affiliation
+  - Realistic calls-to-action based on each representative's actual powers
+- **🎯 Core Messaging** – All emails include:
+  - Solidarity with Iran's Lion-and-Sun Revolution
+  - The six key demands for supporting the Iranian people
+  - References to Prince Reza Pahlavi and democratic transition
+  - Specific Canadian actions (IRGC removal, sanctions, refugee support)
 - **📊 Impact Dashboard** – Track community engagement with real-time statistics on emails generated and ridings represented
 - **🔒 Privacy First** – We never store your name, postal code, or any personal information
 - **📱 Mobile Responsive** – Full Bootstrap 5 responsive design works on any device
+- **🌐 Bilingual Support** – Templates available in English and French
 
 ## 🚀 Getting Started
 
@@ -106,13 +115,22 @@ This project is open source and available under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
+- The brave people of Iran fighting for freedom in the Lion-and-Sun Revolution
+- Prince Reza Pahlavi for his leadership and vision for a free, democratic Iran
 - All contributors and supporters of human rights in Iran
 - The Iranian-Canadian community for their continued advocacy
+- [Represent API](https://represent.opennorth.ca/) for representative lookup data
+
+## 📚 Resources
+
+- **Lion-and-Sun Revolution**: [https://iranopasmigirim.com/en](https://iranopasmigirim.com/en)
+- **Prince Reza Pahlavi**: [@PahlaviReza on Twitter/X](https://twitter.com/PahlaviReza)
+- **Human Rights Documentation**: Various international human rights organizations
 
 ---
 
 <p align="center">
-  <strong>Your voice matters. Make it heard.</strong>
+  <strong>Long live freedom. Long live Iran. Victory to Iran's Lion-and-Sun Revolution.</strong>
 </p>
 
 <p align="center">
