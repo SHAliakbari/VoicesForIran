@@ -165,13 +165,21 @@
                 // Get targeted template for this representative
                 var template = TemplateProvider.GetTargetedTemplate(rep);
 
+                var ridingOrRegion = rep.DistrictName ?? (rep.PrefersFrench ? "votre circonscription" : "your riding");
+                var representativeFullName = string.IsNullOrWhiteSpace(rep.Honorific)
+                    ? rep.Name
+                    : $"{rep.Honorific} {rep.Name}";
+
                 // Replace placeholders with actual values
                 var variables = new Dictionary<string, string>
                 {
                     ["RepresentativeTitle"] = $"{rep.ElectedOffice} {rep.Name}",
                     ["RepresentativeName"] = rep.Name,
                     ["RepresentativeOffice"] = rep.ElectedOffice,
-                    ["RidingName"] = rep.DistrictName ?? "your riding",
+                    ["RidingName"] = ridingOrRegion,
+                    ["RidingOrRegion"] = ridingOrRegion,
+                    ["RepresentativeFullName"] = representativeFullName,
+                    ["PartyName"] = rep.Party ?? "",
                     ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
                     ["UserName"] = _formModel.UserName ?? "A concerned constituent",
                     ["Honorific"] = rep.Honorific
