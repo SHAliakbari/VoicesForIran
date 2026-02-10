@@ -12,7 +12,7 @@
                 <div class="d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1">
                         <strong>@Rep.Name</strong>
-                        <div class="text-muted small">@Rep.ElectedOffice @(Rep.DistrictName != null ? $"• {Rep.DistrictName}" : "")</div>
+                        <div class="text-muted small">@Rep.ElectedOffice @(Rep.DistrictName != null ? $"â€¢ {Rep.DistrictName}" : "")</div>
                         @if (!string.IsNullOrEmpty(Rep.Party))
                         {
                             <span class="badge bg-light text-dark border mt-1">@Rep.Party</span>
