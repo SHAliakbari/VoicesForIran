@@ -51,37 +51,50 @@ Voices for Iran is an open-source Blazor Server application that helps Canadian 
 
 ```
 VoicesForIran/
-├── Components/
-│   ├── Layout/         # Main layout and navigation
-│   ├── Pages/          # Razor pages (Home, Impact)
-├── Core/
+├── Components/         # Blazor components and pages
+├── Core/               # Core business logic and models
 │   ├── Interfaces/     # Service contracts
 │   ├── Models/         # Domain models
-│   ├── Services/       # Business logic
-├── Templates/          # Email templates (JSON)
-├── wwwroot/            # Static assets (CSS, JS)
+│   └── Services/       # Business logic services
+├── Infrastructure/     # External concerns (API clients, database)
+│   ├── Api/            # Third-party API integrations
+│   └── Data/           # Database access (SQLite)
+├── Templates/          # Hierarchical email templates (JSON)
+│   ├── en/         # Template system configuration
+│	│	├── config/         # Template system configuration
+│	│	├── federal/        # Federal-level templates by party
+│	│	├── provincial/     # Provincial-level templates by party
+│	│	└── municipal/      # Municipal-level templates
+|	└── fr/
+├── wwwroot/            # Static assets (CSS, JS, images)
+└── Program.cs          # Application entry point and DI setup
 ```
 
 ## 📨 Email Templates
 
-The application uses randomized email templates to help avoid spam detection. Templates are stored as JSON files in the `Templates/` folder and support dynamic placeholders:
+The application uses a hierarchical, randomized email template system to generate context-aware messages and avoid spam detection. Templates are stored as JSON files in the `Templates/` folder, organized by government level (federal, provincial, municipal) and political affiliation.
+
+A configuration file at `Templates/config/party-mapping.json` maps political parties to broader ideologies, allowing for more flexible and targeted template selection.
+
+Templates support dynamic placeholders:
 
 | Placeholder | Description |
 |-------------|-------------|
-| `{{RepresentativeTitle}}` | Full title with name (e.g., "MP John Smith") |
+| `{{RepresentativeTitle}}` | Full title with name (e.g., "The Hon. John Smith, M.P.") |
 | `{{RepresentativeName}}` | Representative's name only |
 | `{{RidingName}}` | Electoral district name |
 | `{{PostalCode}}` | User's postal code |
 | `{{UserName}}` | User's name (if provided) |
 
-See [Templates/README.md](VoicesForIran/Templates/README.md) for more details on creating custom templates.
+See the `Templates` directory for examples. A detailed `README.md` for templates is planned.
 
 ## 🛠 Tech Stack
 
-- **Framework:** [.NET 10](https://dotnet.microsoft.com/) / [Blazor Server](https://dotnet.microsoft.com/apps/aspnet/web-apps/blazor)
-- **UI:** [Bootstrap 5](https://getbootstrap.com/) with [Bootstrap Icons](https://icons.getbootstrap.com/)
-- **Database:** SQLite (via Microsoft.Data.Sqlite)
-- **Architecture:** Clean Architecture with dependency injection
+- **Framework:** [.NET 10](https://dotnet.microsoft.com/) / Blazor Server
+- **UI:** Bootstrap 5 & Bootstrap Icons
+- **Database:** SQLite (using `Microsoft.Data.Sqlite`) for impact tracking
+- **API Integration:** `HttpClient` for calling the Represent API
+- **Architecture:** Layered architecture inspired by Clean Architecture principles, using dependency injection.
 
 ## 🤝 Contributing
 
