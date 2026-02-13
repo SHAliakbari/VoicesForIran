@@ -217,17 +217,18 @@
 
     private Task<GeneratedEmailsList.GeneratedEmailVm> CreateGeneratedEmailVm(Representative rep, string? templateId)
     {
+        var ideology = TemplateProvider.GetIdeologyForParty(rep.Party);
+        var language = rep.PreferredLanguageCode;
+        var applicableTemplates = TemplateProvider.GetTemplates(rep.Level, ideology, language).ToList();
         var template = string.IsNullOrEmpty(templateId)
             ? TemplateProvider.GetTemplate(rep)
-            : TemplateProvider.GetTemplateById(templateId);
+            : applicableTemplates.FirstOrDefault(t => t.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase))
+              ?? TemplateProvider.GetTemplateById(templateId);
 
         if (template is null)
         {
             throw new InvalidOperationException($"Could not find a suitable template for {rep.Name}.");
         }
-
-        var ideology = TemplateProvider.GetIdeologyForParty(rep.Party);
-        var applicableTemplates = TemplateProvider.GetTemplates(rep.Level, ideology, rep.PreferredLanguageCode).ToList();
 
         var ridingOrRegion = rep.DistrictName ?? (rep.PrefersFrench ? "votre circonscription" : "your riding");
         var representativeFullName = string.IsNullOrWhiteSpace(rep.Honorific) ? rep.Name : $"{rep.Honorific} {rep.Name}";
