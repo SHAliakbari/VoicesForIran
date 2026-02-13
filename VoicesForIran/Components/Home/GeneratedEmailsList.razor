@@ -1,105 +1,95 @@
 @using VoicesForIran.Core.Models
 
-@if (Emails.Any())
-{
-    <div class="card mt-4 shadow border-0 rounded-4 overflow-hidden">
-        <div class="card-header bg-primary text-white py-3">
-            <h3 class="h5 mb-0">
-                <i class="bi bi-envelope-check-fill me-2"></i>
-                Your Personalized Emails
-            </h3>
-        </div>
-        <div class="card-body p-0">
-            <div class="list-group list-group-flush">
-                @foreach (var email in Emails)
-                {
-                    <div class="list-group-item p-4">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h6 class="fw-bold mb-1">@email.Representative.Name</h6>
-                                <p class="text-muted small mb-1">@email.Representative.ElectedOffice</p>
-                                @if (!string.IsNullOrEmpty(email.Representative.Party))
-                                {
-                                    <span class="badge bg-light text-dark border">@email.Representative.Party</span>
-                                }
-                                <span class="badge @GetLevelBadgeClass(email.Representative) ms-1">
-                                    @GetLevelLabel(email.Representative)
-                                </span>
-                            </div>
-                            <div class="text-end">
-                                <span class="badge bg-success-subtle text-success">
-                                    <i class="bi bi-file-earmark-text me-1"></i>
-                                    @email.TemplateName
-                                </span>
-                            </div>
-                        </div>
-
-                        <details class="mb-3">
-                            <summary class="btn btn-sm btn-outline-secondary mb-2" style="cursor: pointer;">
-                                <i class="bi bi-eye me-1"></i> Preview Email
-                            </summary>
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <div class="mb-2">
-                                        <strong>Subject:</strong><br />
-                                        <span class="text-muted">@email.ProcessedTemplate.Subject</span>
-                                    </div>
-                                    <div class="mb-3">
-                                        <strong>Message:</strong><br />
-                                        <pre class="text-muted small mb-0" style="white-space: pre-wrap; font-family: inherit;">@email.ProcessedTemplate.Body</pre>
-                                    </div>
-                                    <button type="button"
-                                            class="btn btn-sm btn-outline-primary w-100"
-                                            @onclick="@(() => OnCopy.InvokeAsync(email))">
-                                        @if (CopiedEmailId == email.CopyKey)
-                                        {
-                                            <span><i class="bi bi-check-lg me-1"></i>Copied to Clipboard!</span>
-                                        }
-                                        else
-                                        {
-                                            <span><i class="bi bi-clipboard me-1"></i>Copy to Clipboard</span>
-                                        }
-                                    </button>
-                                </div>
-                            </div>
-                        </details>
-
-                        <a href="@email.MailtoLink" class="btn btn-primary w-100" target="_blank">
-                            <i class="bi bi-envelope-open me-2"></i>
-                            Open in Email App
+<div class="vstack gap-4 mt-4">
+    @foreach (var email in Emails)
+    {
+        <div class="card rounded-4 border-0 shadow-sm" id="rep-@(email.Representative.Name.Replace(" ", "-"))">
+            <div class="card-header bg-white border-0 pt-3 pb-0">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h3 class="h6 mb-0">@email.Representative.ElectedOffice</h3>
+                        <p class="small text-muted mb-0">@email.Representative.Name</p>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <a href="@email.MailtoLink" target="_blank" class="btn btn-primary rounded-pill px-3"
+                           @onclick="() => OnEmailLogged.InvokeAsync(email)">
+                            <i class="bi bi-send me-2"></i>Open in Email Client
                         </a>
                     </div>
-                }
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row gx-3 gy-3">
+                    <div class="col-12 col-md-6">
+                        <label for="template-select-@email.CopyKey" class="form-label small text-muted">Template</label>
+                        <select id="template-select-@email.CopyKey" class="form-select form-select-sm"
+                                @bind="email.SelectedTemplateId"
+                                @bind:after="() => OnTemplateChanged.InvokeAsync(email)">
+                            <option value="">Default (Recommended)</option>
+                            @foreach (var template in email.ApplicableTemplates)
+                            {
+                                <option value="@template.Id">@GetFriendlyTemplateName(template.FileName)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6 text-md-end">
+                        <label class="form-label small text-muted d-block">&nbsp;</label>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => OnCopy.InvokeAsync(email)">
+                            <i class="bi bi-clipboard me-2"></i>
+                            @(CopiedEmailId == email.CopyKey ? "Copied!" : "Copy Content")
+                        </button>
+                    </div>
+                </div>
+                <div class="accordion accordion-flush" id="accordion-email-@email.CopyKey">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-email-@email.CopyKey" aria-expanded="false" aria-controls="collapse-email-@email.CopyKey">
+                                <strong class="me-2">Subject:</strong> @email.ProcessedTemplate.Subject
+                            </button>
+                        </h2>
+                        <div id="collapse-email-@email.CopyKey" class="accordion-collapse collapse" data-bs-parent="#accordion-email-@email.CopyKey">
+                            <div class="accordion-body bg-light" style="white-space: pre-wrap;">
+                                @email.ProcessedTemplate.Body
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-}
+    }
+</div>
 
 @code {
-    public sealed class GeneratedEmailVm
+    [Parameter, EditorRequired]
+    public List<GeneratedEmailVm> Emails { get; set; } = new();
+
+    [Parameter]
+    public int? CopiedEmailId { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<GeneratedEmailVm> OnCopy { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<GeneratedEmailVm> OnTemplateChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<GeneratedEmailVm> OnEmailLogged { get; set; }
+
+    private static string GetFriendlyTemplateName(string fileName)
     {
-        public required Representative Representative { get; init; }
-        public required EmailTemplate ProcessedTemplate { get; init; }
-        public required string MailtoLink { get; init; }
-        public required string TemplateName { get; init; }
-        public required int CopyKey { get; init; }
+        var name = Path.GetFileNameWithoutExtension(fileName);
+        name = string.Join(" ", name.Split(new[] { '-', '_' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(word => word.Length > 0 ? char.ToUpper(word[0]) + word[1..] : string.Empty));
+        return name;
     }
 
-    [Parameter] public required IReadOnlyList<GeneratedEmailVm> Emails { get; set; }
-    [Parameter] public int? CopiedEmailId { get; set; }
-    [Parameter] public EventCallback<GeneratedEmailVm> OnCopy { get; set; }
-
-    private static string GetLevelBadgeClass(Representative rep)
+    public class GeneratedEmailVm
     {
-        if (rep.IsFederalMP) return "bg-primary-subtle text-primary";
-        if (rep.IsProvincial) return "bg-info-subtle text-info";
-        return "bg-warning-subtle text-warning";
-    }
-
-    private static string GetLevelLabel(Representative rep)
-    {
-        if (rep.IsFederalMP) return "Federal";
-        if (rep.IsProvincial) return "Provincial";
-        return "Municipal";
+        public required Representative Representative { get; set; }
+        public required EmailTemplate ProcessedTemplate { get; set; }
+        public required string MailtoLink { get; set; }
+        public required int CopyKey { get; set; }
+        public string? SelectedTemplateId { get; set; }
+        public List<EmailTemplate> ApplicableTemplates { get; set; } = new();
     }
 }

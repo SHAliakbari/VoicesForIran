@@ -56,6 +56,11 @@ public sealed class TemplateProvider : ITemplateProvider
         _logger.LogInformation("Loaded {Count} email templates", _templates.Count);
     }
 
+    public IEnumerable<EmailTemplate> GetAllTemplates() => _templates;
+
+    public EmailTemplate? GetTemplateById(string templateId) =>
+        _templates.FirstOrDefault(t => t.Id.Equals(templateId, StringComparison.OrdinalIgnoreCase));
+
     private async Task LoadPartyMappingAsync(CancellationToken cancellationToken)
     {
         var configPath = Path.Combine(_templatesPath, "config", "party-mapping.json");
@@ -191,32 +196,39 @@ public sealed class TemplateProvider : ITemplateProvider
         return _templates[index];
     }
 
-    public EmailTemplate GetTargetedTemplate(Representative representative)
+    public EmailTemplate? GetTemplate(Representative representative, string language = "en")
     {
         if (_templates.Count == 0)
         {
-            throw new InvalidOperationException("No templates loaded. Call LoadTemplatesAsync first.");
+            _logger.LogWarning("GetTemplate called before templates were loaded.");
+            return null;
         }
 
         var level = representative.Level;
         var ideology = GetIdeologyForParty(representative.Party);
-        var language = representative.PreferredLanguageCode;
+        var representativeLanguage = representative.PreferredLanguageCode;
 
         // Try to find templates with decreasing specificity
-        var candidates = FindMatchingTemplates(level, ideology, language);
+        var candidates = FindMatchingTemplates(level, ideology, representativeLanguage);
 
         if (candidates.Count == 0)
         {
-            // Fallback to any template in the same language
+            // Fallback to any template in the same language or English
             candidates = _templates.Where(t =>
-                string.Equals(t.Targeting.Language, language, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(t.Targeting.Language, representativeLanguage, StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(t.Targeting.Language, "en", StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         if (candidates.Count == 0)
         {
             // Ultimate fallback to any template
-            candidates = _templates;
+            candidates = _templates.ToList();
+        }
+
+        if (candidates.Count == 0)
+        {
+            _logger.LogError("No templates available to select from, even after fallbacks.");
+            return null;
         }
 
         // Randomly select from matching templates
@@ -224,7 +236,7 @@ public sealed class TemplateProvider : ITemplateProvider
         var selected = candidates[index];
 
         _logger.LogDebug("Selected template {Template} for {Representative} (Level={Level}, Ideology={Ideology}, Language={Language})",
-            selected.FileName, representative.Name, level, ideology, language);
+            selected.FileName, representative.Name, level, ideology, representativeLanguage);
 
         return selected;
     }

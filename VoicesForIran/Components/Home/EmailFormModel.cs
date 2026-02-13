@@ -10,5 +10,8 @@ public sealed class EmailFormModel
         ErrorMessage = "Please enter a valid Canadian postal code (e.g., K1A 0A6)")]
     public string? PostalCode { get; set; }
 
-    public string? UserName { get; set; }
+    [Required(ErrorMessage = "Please enter your full name.")]
+    public string UserName { get; set; } = string.Empty;
+
+    public string? SelectedTemplateId { get; set; }
 }

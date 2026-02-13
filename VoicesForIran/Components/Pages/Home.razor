@@ -33,7 +33,11 @@
                                            OnSelectAll="HandleSelectAll"
                                            OnDeselectAll="HandleDeselectAll" />
 
-                    <GeneratedEmailsList Emails="@_generatedEmails" CopiedEmailId="@_copiedEmailId" OnCopy="CopyEmailToClipboard" />
+                    <GeneratedEmailsList Emails="@_generatedEmails"
+                                         CopiedEmailId="@_copiedEmailId"
+                                         OnCopy="CopyEmailToClipboard"
+                                         OnTemplateChanged="HandleTemplateChange"
+                                         OnEmailLogged="LogEmailGeneration" />
                 }
 
                 <!-- Privacy Notice -->
@@ -60,9 +64,15 @@
     private RepresentativeLookupResult? _lookupResult;
     private string? _errorText;
     private bool _isLoading;
+
     private HashSet<Representative> _selectedRepresentatives = new();
     private List<GeneratedEmailsList.GeneratedEmailVm> _generatedEmails = new();
     private int? _copiedEmailId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await TemplateProvider.LoadTemplatesAsync();
+    }
 
     private async Task HandleSubmit()
     {
@@ -162,53 +172,8 @@
         {
             foreach (var rep in _selectedRepresentatives)
             {
-                // Get targeted template for this representative
-                var template = TemplateProvider.GetTargetedTemplate(rep);
-
-                var ridingOrRegion = rep.DistrictName ?? (rep.PrefersFrench ? "votre circonscription" : "your riding");
-                var representativeFullName = string.IsNullOrWhiteSpace(rep.Honorific)
-                    ? rep.Name
-                    : $"{rep.Honorific} {rep.Name}";
-
-                // Replace placeholders with actual values
-                var variables = new Dictionary<string, string>
-                {
-                    ["RepresentativeTitle"] = $"{rep.ElectedOffice} {rep.Name}",
-                    ["RepresentativeName"] = rep.Name,
-                    ["RepresentativeOffice"] = rep.ElectedOffice,
-                    ["RidingName"] = ridingOrRegion,
-                    ["RidingOrRegion"] = ridingOrRegion,
-                    ["RepresentativeFullName"] = representativeFullName,
-                    ["PartyName"] = rep.Party ?? "",
-                    ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
-                    ["UserName"] = _formModel.UserName ?? "A concerned constituent",
-                    ["Honorific"] = rep.Honorific
-                };
-                var processedTemplate = template.WithVariables(variables);
-
-                // Create a temporary lookup result with just this representative
-                var singleRepResult = new RepresentativeLookupResult
-                {
-                    PostalCode = _lookupResult!.PostalCode,
-                    Representatives = new List<Representative> { rep }
-                };
-
-                // Generate mailto link for this representative
-                var mailtoLink = MailtoGenerator.GenerateMailtoLink(singleRepResult, processedTemplate, _formModel.UserName);
-
-                _generatedEmails.Add(new GeneratedEmailsList.GeneratedEmailVm
-                {
-                    Representative = rep,
-                    ProcessedTemplate = processedTemplate,
-                    MailtoLink = mailtoLink,
-                    TemplateName = GetFriendlyTemplateName(template.FileName),
-                    CopyKey = (rep.Name.GetHashCode(), rep.ElectedOffice.GetHashCode()).GetHashCode()
-                });
-
-                // Log for impact dashboard (only MP name and riding - NO user data)
-                await EmailLogRepository.LogEmailGenerationAsync(
-                    rep.Name,
-                    rep.DistrictName ?? "Unknown Riding");
+                var generatedEmail = await CreateGeneratedEmailVm(rep, null);
+                _generatedEmails.Add(generatedEmail);
             }
         }
         catch (Exception ex)
@@ -217,20 +182,89 @@
         }
     }
 
-    private static string GetFriendlyTemplateName(string fileName)
+    private async Task HandleTemplateChange(GeneratedEmailsList.GeneratedEmailVm emailVm)
     {
-        // Remove path and extension, make it friendly
-        var name = Path.GetFileNameWithoutExtension(fileName);
-
-        // Convert kebab-case to Title Case
-        name = string.Join(" ", name.Split('-', '_')
-
-                        .Select(word => word.Length > 0
-                ? char.ToUpper(word[0]) + (word.Length > 1 ? word[1..] : string.Empty)
-                : string.Empty));
-
-
-        return name;
+        try
+        {
+            var index = _generatedEmails.FindIndex(e => e.CopyKey == emailVm.CopyKey);
+            if (index != -1)
+            {
+                var regeneratedEmail = await CreateGeneratedEmailVm(emailVm.Representative, emailVm.SelectedTemplateId);
+                _generatedEmails[index] = regeneratedEmail;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorText = $"An error occurred while changing templates: {ex.Message}";
+        }
     }
 
+    private async Task LogEmailGeneration(GeneratedEmailsList.GeneratedEmailVm email)
+    {
+        try
+        {
+            await EmailLogRepository.LogEmailGenerationAsync(
+                email.Representative.Name,
+                email.Representative.DistrictName ?? "Unknown Riding");
+        }
+        catch (Exception ex)
+        {
+            // Log to console, but don't bother the user
+            System.Diagnostics.Debug.WriteLine($"Failed to log email generation: {ex.Message}");
+        }
+    }
+
+    private Task<GeneratedEmailsList.GeneratedEmailVm> CreateGeneratedEmailVm(Representative rep, string? templateId)
+    {
+        var template = string.IsNullOrEmpty(templateId)
+            ? TemplateProvider.GetTemplate(rep)
+            : TemplateProvider.GetTemplateById(templateId);
+
+        if (template is null)
+        {
+            throw new InvalidOperationException($"Could not find a suitable template for {rep.Name}.");
+        }
+
+        var ideology = TemplateProvider.GetIdeologyForParty(rep.Party);
+        var applicableTemplates = TemplateProvider.GetTemplates(rep.Level, ideology, rep.PreferredLanguageCode).ToList();
+
+        var ridingOrRegion = rep.DistrictName ?? (rep.PrefersFrench ? "votre circonscription" : "your riding");
+        var representativeFullName = string.IsNullOrWhiteSpace(rep.Honorific) ? rep.Name : $"{rep.Honorific} {rep.Name}";
+
+        var variables = new Dictionary<string, string>
+        {
+            ["RepresentativeTitle"] = $"{rep.ElectedOffice} {rep.Name}",
+            ["RepresentativeName"] = rep.Name,
+            ["RepresentativeOffice"] = rep.ElectedOffice,
+            ["RidingName"] = ridingOrRegion,
+            ["RidingOrRegion"] = ridingOrRegion,
+            ["RepresentativeFullName"] = representativeFullName,
+            ["PartyName"] = rep.Party ?? "",
+            ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
+            ["UserName"] = _formModel.UserName ?? "A concerned constituent",
+            ["Honorific"] = rep.Honorific
+        };
+        var processedTemplate = template.WithVariables(variables);
+
+        var singleRepResult = new RepresentativeLookupResult
+        {
+            PostalCode = _lookupResult!.PostalCode,
+            Representatives = new List<Representative> { rep }
+        };
+
+        var mailtoLink = MailtoGenerator.GenerateMailtoLink(singleRepResult, processedTemplate, _formModel.UserName);
+
+        var vm = new GeneratedEmailsList.GeneratedEmailVm
+        {
+            Representative = rep,
+            ProcessedTemplate = processedTemplate,
+            MailtoLink = mailtoLink,
+            CopyKey = (rep.Name.GetHashCode(), rep.ElectedOffice.GetHashCode()).GetHashCode(),
+            SelectedTemplateId = template.Id,
+            ApplicableTemplates = applicableTemplates
+        };
+
+        return Task.FromResult(vm);
+    }
 }
