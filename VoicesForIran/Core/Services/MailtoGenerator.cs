@@ -73,8 +73,6 @@ public sealed class MailtoGenerator : IMailtoGenerator
 
     private static string FormatBodyWithSignature(string body, string? userName)
     {
-        return string.IsNullOrWhiteSpace(userName)
-            ? $"{body}\n\nA concerned constituent"
-            : $"{body}\n\nSincerely,\n{userName}";
+        return body;
     }
 }
