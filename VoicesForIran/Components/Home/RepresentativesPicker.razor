@@ -20,14 +20,17 @@
                     <h6 class="fw-bold text-primary mb-0">
                         <i class="bi bi-building me-2"></i>Federal Representatives
                     </h6>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-primary btn-sm" @onclick="@(() => OnSelectAll.InvokeAsync(FederalReps))">
-                            <i class="bi bi-check-all me-1"></i>Select All
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@(() => OnDeselectAll.InvokeAsync(FederalReps))">
-                            <i class="bi bi-x-lg me-1"></i>Deselect All
-                        </button>
-                    </div>
+                    @if (FederalReps.Count > 1)
+                    {
+                        <div class="d-flex flex-wrap gap-2" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1" @onclick="@(() => OnSelectAll.InvokeAsync(FederalReps))">
+                                <i class="bi bi-check-all me-1"></i>Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1" @onclick="@(() => OnDeselectAll.InvokeAsync(FederalReps))">
+                                <i class="bi bi-x-lg me-1"></i>Deselect All
+                            </button>
+                        </div>
+                    }
                 </div>
                 @foreach (var rep in FederalReps)
                 {
@@ -43,14 +46,17 @@
                     <h6 class="fw-bold text-info mb-0">
                         <i class="bi bi-buildings me-2"></i>Provincial Representatives
                     </h6>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-info btn-sm" @onclick="@(() => OnSelectAll.InvokeAsync(ProvincialReps))">
-                            <i class="bi bi-check-all me-1"></i>Select All
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@(() => OnDeselectAll.InvokeAsync(ProvincialReps))">
-                            <i class="bi bi-x-lg me-1"></i>Deselect All
-                        </button>
-                    </div>
+                    @if (ProvincialReps.Count > 1)
+                    {
+                        <div class="d-flex flex-wrap gap-2" role="group">
+                            <button type="button" class="btn btn-outline-info btn-sm px-2 py-1" @onclick="@(() => OnSelectAll.InvokeAsync(ProvincialReps))">
+                                <i class="bi bi-check-all me-1"></i>Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1" @onclick="@(() => OnDeselectAll.InvokeAsync(ProvincialReps))">
+                                <i class="bi bi-x-lg me-1"></i>Deselect All
+                            </button>
+                        </div>
+                    }
                 </div>
                 @foreach (var rep in ProvincialReps)
                 {
@@ -66,14 +72,17 @@
                     <h6 class="fw-bold text-warning mb-0">
                         <i class="bi bi-houses me-2"></i>Municipal Representatives
                     </h6>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <button type="button" class="btn btn-outline-warning btn-sm" @onclick="@(() => OnSelectAll.InvokeAsync(MunicipalReps))">
-                            <i class="bi bi-check-all me-1"></i>Select All
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="@(() => OnDeselectAll.InvokeAsync(MunicipalReps))">
-                            <i class="bi bi-x-lg me-1"></i>Deselect All
-                        </button>
-                    </div>
+                    @if (MunicipalReps.Count > 1)
+                    {
+                        <div class="d-flex flex-wrap gap-2" role="group">
+                            <button type="button" class="btn btn-outline-warning btn-sm px-2 py-1" @onclick="@(() => OnSelectAll.InvokeAsync(MunicipalReps))">
+                                <i class="bi bi-check-all me-1"></i>Select All
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1" @onclick="@(() => OnDeselectAll.InvokeAsync(MunicipalReps))">
+                                <i class="bi bi-x-lg me-1"></i>Deselect All
+                            </button>
+                        </div>
+                    }
                 </div>
                 @foreach (var rep in MunicipalReps)
                 {
