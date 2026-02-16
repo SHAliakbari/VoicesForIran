@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /VoicesForIran/email_log.db
+/VoicesForIran/Templates/EmailTemplates.txt
