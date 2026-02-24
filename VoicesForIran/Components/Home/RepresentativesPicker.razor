@@ -4,7 +4,7 @@
     <div class="card-header bg-success text-white py-3">
         <h3 class="h5 mb-0">
             <i class="bi bi-check-circle-fill me-2"></i>
-            @Representatives.Count Representative(s) Found
+            @Representatives.Count(r => r.HasEmail) Representative(s) Found
         </h3>
     </div>
     <div class="card-body p-4">

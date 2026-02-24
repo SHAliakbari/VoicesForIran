@@ -145,7 +145,7 @@
     {
         try
         {
-            var emailContent = $"Subject: {email.ProcessedTemplate.Subject}\n\n{email.ProcessedTemplate.Body}";
+            var emailContent = $"To: {email.Representative.Email}\nSubject: {email.ProcessedTemplate.Subject}\n\n{email.ProcessedTemplate.Body}";
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", emailContent);
 
             _copiedEmailId = email.CopyKey;

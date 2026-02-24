@@ -32,12 +32,13 @@
             <div class="mb-4">
                 <label for="userName" class="form-label fw-semibold">
                     <i class="bi bi-person text-primary me-1"></i>
-                    Your Name <span class="text-muted fw-normal">(optional)</span>
+                    Your Name <span class="text-danger">*</span>
                 </label>
                 <InputText id="userName"
                            @bind-Value="Model.UserName"
                            class="form-control form-control-lg"
                            placeholder="To sign your email" />
+                <ValidationMessage For="@(() => Model.UserName)" class="text-danger small mt-1" />
                 <div class="form-text">
                     <i class="bi bi-shield-lock me-1"></i>
                     Your name is only used to sign the email. We never store it.
@@ -47,7 +48,7 @@
             <div class="mb-4">
                 <label for="phoneNumber" class="form-label fw-semibold">
                     <i class="bi bi-telephone text-primary me-1"></i>
-                    Phone Number <span class="text-muted fw-normal">(optional)</span>
+                    Phone Number <span class="text-danger">*</span>
                 </label>
                 <InputText id="phoneNumber"
                            @bind-Value="Model.PhoneNumber"
