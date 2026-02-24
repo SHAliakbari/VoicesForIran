@@ -44,6 +44,22 @@
                 </div>
             </div>
 
+            <div class="mb-4">
+                <label for="phoneNumber" class="form-label fw-semibold">
+                    <i class="bi bi-telephone text-primary me-1"></i>
+                    Phone Number <span class="text-muted fw-normal">(optional)</span>
+                </label>
+                <InputText id="phoneNumber"
+                           @bind-Value="Model.PhoneNumber"
+                           class="form-control form-control-lg"
+                           placeholder="e.g., 416-555-0123" />
+                <ValidationMessage For="@(() => Model.PhoneNumber)" class="text-danger small mt-1" />
+                <div class="form-text">
+                    <i class="bi bi-shield-lock me-1"></i>
+                    Canadian phone number only. Displayed in your email signature. We never store it.
+                </div>
+            </div>
+
             <div class="d-grid gap-2 mt-4">
                 <button type="submit"
                         class="btn btn-primary btn-lg py-3 rounded-3"

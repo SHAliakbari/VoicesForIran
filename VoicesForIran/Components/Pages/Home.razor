@@ -244,6 +244,7 @@
             ["PartyName"] = rep.Party ?? "",
             ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
             ["UserName"] = _formModel.UserName ?? "A concerned constituent",
+            ["PhoneNumber"] = !string.IsNullOrWhiteSpace(_formModel.PhoneNumber) ? $"\n{_formModel.PhoneNumber}" : "",
             ["Honorific"] = rep.Honorific
         };
         var processedTemplate = template.WithVariables(variables);
