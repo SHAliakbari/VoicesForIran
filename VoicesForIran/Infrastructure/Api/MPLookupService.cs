@@ -30,7 +30,7 @@ public sealed partial class MPLookupService : IMPLookupService
 
         if (!IsValidCanadianPostalCode(normalizedPostalCode))
         {
-            _logger.LogWarning("Invalid postal code format: {PostalCode}", postalCode);
+            _logger.LogWarning("Invalid postal code format provided");
             return new RepresentativeLookupResult
             {
                 PostalCode = postalCode,
@@ -41,13 +41,13 @@ public sealed partial class MPLookupService : IMPLookupService
         try
         {
             var url = $"{BaseUrl}/postcodes/{normalizedPostalCode}/";
-            _logger.LogInformation("Looking up representatives for postal code: {PostalCode}", normalizedPostalCode);
+            _logger.LogInformation("Looking up representatives for user postal code");
 
             var response = await _httpClient.GetFromJsonAsync<RepresentApiResponse>(url, cancellationToken);
 
             if (response is null)
             {
-                _logger.LogWarning("No response received for postal code: {PostalCode}", normalizedPostalCode);
+                _logger.LogWarning("No response received from API for postal code lookup");
                 return new RepresentativeLookupResult
                 {
                     PostalCode = postalCode,
@@ -62,8 +62,8 @@ public sealed partial class MPLookupService : IMPLookupService
                 .ThenBy(r => r.ElectedOffice)
                 .ToList();
 
-            _logger.LogInformation("Found {Count} representatives for postal code: {PostalCode}",
-                representatives.Count, normalizedPostalCode);
+            _logger.LogInformation("Found {Count} representatives for user postal code",
+                representatives.Count);
 
             return new RepresentativeLookupResult
             {
@@ -73,8 +73,8 @@ public sealed partial class MPLookupService : IMPLookupService
         }
         catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "HTTP error looking up representatives for postal code: {PostalCode}", normalizedPostalCode);
-            throw new InvalidOperationException($"Failed to look up representatives for postal code: {postalCode}", ex);
+            _logger.LogError(ex, "HTTP error looking up representatives");
+            throw new InvalidOperationException("Failed to look up representatives", ex);
         }
     }
 
