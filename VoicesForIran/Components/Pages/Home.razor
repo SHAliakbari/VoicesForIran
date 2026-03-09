@@ -108,6 +108,10 @@
     private List<GeneratedEmailsList.GeneratedEmailVm> _generatedEmails = new();
     private int? _copiedEmailId;
     private bool _showReminderPopup;
+    private GeneratedEmailsList.GeneratedEmailVm? _pendingEmail;
+    private PendingActionType _pendingAction;
+
+    private enum PendingActionType { None, Copy, OpenMailClient }
 
     protected override async Task OnInitializedAsync()
     {
@@ -181,27 +185,12 @@
         return Task.CompletedTask;
     }
 
-    private async Task CopyEmailToClipboard(GeneratedEmailsList.GeneratedEmailVm email)
+    private Task CopyEmailToClipboard(GeneratedEmailsList.GeneratedEmailVm email)
     {
-        try
-        {
-            var emailContent = $"To: {email.Representative.Email}\nSubject: {email.ProcessedTemplate.Subject}\n\n{email.ProcessedTemplate.Body}";
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", emailContent);
-
-            _copiedEmailId = email.CopyKey;
-            _showReminderPopup = true;
-
-            // Reset the copied state after 2 seconds
-            _ = Task.Delay(2000).ContinueWith(_ =>
-            {
-                _copiedEmailId = null;
-                InvokeAsync(StateHasChanged);
-            });
-        }
-        catch (Exception ex)
-        {
-            _errorText = $"Failed to copy to clipboard: {ex.Message}";
-        }
+        _pendingEmail = email;
+        _pendingAction = PendingActionType.Copy;
+        _showReminderPopup = true;
+        return Task.CompletedTask;
     }
 
     private async Task GenerateEmails()
@@ -241,26 +230,65 @@
         }
     }
 
-    private async Task LogEmailGeneration(GeneratedEmailsList.GeneratedEmailVm email)
+    private Task LogEmailGeneration(GeneratedEmailsList.GeneratedEmailVm email)
     {
+        _pendingEmail = email;
+        _pendingAction = PendingActionType.OpenMailClient;
         _showReminderPopup = true;
-
-        try
-        {
-            await EmailLogRepository.LogEmailGenerationAsync(
-                email.Representative.Name,
-                email.Representative.DistrictName ?? "Unknown Riding");
-        }
-        catch (Exception ex)
-        {
-            // Log to console, but don't bother the user
-            System.Diagnostics.Debug.WriteLine($"Failed to log email generation: {ex.Message}");
-        }
+        return Task.CompletedTask;
     }
 
-    private void DismissReminderPopup()
+    private async Task DismissReminderPopup()
     {
         _showReminderPopup = false;
+
+        if (_pendingEmail is null)
+        {
+            _pendingAction = PendingActionType.None;
+            return;
+        }
+
+        var email = _pendingEmail;
+        var action = _pendingAction;
+        _pendingEmail = null;
+        _pendingAction = PendingActionType.None;
+
+        switch (action)
+        {
+            case PendingActionType.Copy:
+                try
+                {
+                    var emailContent = $"To: {email.Representative.Email}\nSubject: {email.ProcessedTemplate.Subject}\n\n{email.ProcessedTemplate.Body}";
+                    await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", emailContent);
+
+                    _copiedEmailId = email.CopyKey;
+
+                    _ = Task.Delay(2000).ContinueWith(_ =>
+                    {
+                        _copiedEmailId = null;
+                        InvokeAsync(StateHasChanged);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _errorText = $"Failed to copy to clipboard: {ex.Message}";
+                }
+                break;
+
+            case PendingActionType.OpenMailClient:
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("open", email.MailtoLink);
+                    await EmailLogRepository.LogEmailGenerationAsync(
+                        email.Representative.Name,
+                        email.Representative.DistrictName ?? "Unknown Riding");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to open email client or log: {ex.Message}");
+                }
+                break;
+        }
     }
 
     private Task<GeneratedEmailsList.GeneratedEmailVm> CreateGeneratedEmailVm(Representative rep, string? templateId)

@@ -11,10 +11,10 @@
                         <p class="small text-muted mb-0">@email.Representative.Name</p>
                     </div>
                     <div class="d-flex align-items-center">
-                        <a href="@email.MailtoLink" target="_blank" class="btn btn-primary rounded-pill px-3"
-                           @onclick="() => OnEmailLogged.InvokeAsync(email)">
+                        <button type="button" class="btn btn-primary rounded-pill px-3"
+                                @onclick="() => OnEmailLogged.InvokeAsync(email)">
                             <i class="bi bi-send me-2"></i>Open in Email Client
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
