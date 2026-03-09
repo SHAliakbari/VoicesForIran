@@ -17,6 +17,45 @@
 
 <ContextSection />
 
+@if (_showReminderPopup)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square text-primary me-2"></i>
+                        Don't Forget to Personalize!
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="DismissReminderPopup"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Before sending your email, please replace the placeholders at the bottom of the email template with your actual information:</p>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-person text-primary me-2"></i>
+                            Replace <strong>[YOUR NAME HERE]</strong> with your full name
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-telephone text-primary me-2"></i>
+                            Replace <strong>[YOUR PHONE NUMBER HERE]</strong> with your phone number
+                        </li>
+                    </ul>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Adding your name and phone number helps legitimize your email and increases the likelihood of a response from your representative.
+                    </p>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-primary rounded-pill px-4" @onclick="DismissReminderPopup">
+                        Got it!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Main Form Section -->
 <section class="py-4 py-md-5">
     <div class="container">
@@ -68,6 +107,7 @@
     private HashSet<Representative> _selectedRepresentatives = new();
     private List<GeneratedEmailsList.GeneratedEmailVm> _generatedEmails = new();
     private int? _copiedEmailId;
+    private bool _showReminderPopup;
 
     protected override async Task OnInitializedAsync()
     {
@@ -149,6 +189,7 @@
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", emailContent);
 
             _copiedEmailId = email.CopyKey;
+            _showReminderPopup = true;
 
             // Reset the copied state after 2 seconds
             _ = Task.Delay(2000).ContinueWith(_ =>
@@ -202,6 +243,8 @@
 
     private async Task LogEmailGeneration(GeneratedEmailsList.GeneratedEmailVm email)
     {
+        _showReminderPopup = true;
+
         try
         {
             await EmailLogRepository.LogEmailGenerationAsync(
@@ -213,6 +256,11 @@
             // Log to console, but don't bother the user
             System.Diagnostics.Debug.WriteLine($"Failed to log email generation: {ex.Message}");
         }
+    }
+
+    private void DismissReminderPopup()
+    {
+        _showReminderPopup = false;
     }
 
     private Task<GeneratedEmailsList.GeneratedEmailVm> CreateGeneratedEmailVm(Representative rep, string? templateId)
@@ -243,8 +291,8 @@
             ["RepresentativeFullName"] = representativeFullName,
             ["PartyName"] = rep.Party ?? "",
             ["PostalCode"] = _formModel.PostalCode?.ToUpperInvariant() ?? "",
-            ["UserName"] = _formModel.UserName ?? "A concerned constituent",
-            ["PhoneNumber"] = !string.IsNullOrWhiteSpace(_formModel.PhoneNumber) ? $"\n{_formModel.PhoneNumber}" : "",
+            ["UserName"] = "[YOUR NAME HERE]",
+            ["PhoneNumber"] = "\n[YOUR PHONE NUMBER HERE]",
             ["Honorific"] = rep.Honorific
         };
         var processedTemplate = template.WithVariables(variables);
@@ -255,7 +303,7 @@
             Representatives = new List<Representative> { rep }
         };
 
-        var mailtoLink = MailtoGenerator.GenerateMailtoLink(singleRepResult, processedTemplate, _formModel.UserName);
+        var mailtoLink = MailtoGenerator.GenerateMailtoLink(singleRepResult, processedTemplate);
 
         var vm = new GeneratedEmailsList.GeneratedEmailVm
         {
